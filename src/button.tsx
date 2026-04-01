@@ -1,9 +1,11 @@
 import React from 'react';
 
+export type ButtonVariant = 'primary' | 'reset';
+
 interface ButtonProps {
   onClick: () => void;
   children: React.ReactNode;
-  variant?: 'primary' | 'reset';
+  variant?: ButtonVariant;
 }
 
 const Button: React.FC<ButtonProps> = ({ onClick, children, variant = 'primary' }) => {
