@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import Button from './button';
-
+import Button, { ButtonVariant } from './button'; 
 
 const Counter: React.FC = () => {
   const [count, setCount] = useState<number>(0);
@@ -10,10 +9,9 @@ const Counter: React.FC = () => {
       <h2>Счетчик</h2>
       <div className="counter-value">{count}</div>
       <div className="counter-buttons">
-    
-        <Button onClick={() => setCount(count + 1)} variant="primary">+</Button>
-        <Button onClick={() => setCount(count - 1)} variant="primary">-</Button>
-        <Button onClick={() => setCount(0)} variant="reset">Сброс</Button>
+        <Button onClick={() => setCount(count + 1)} variant={ButtonVariant.Primary}>+</Button>
+        <Button onClick={() => setCount(count - 1)} variant={ButtonVariant.Primary}>-</Button>
+        <Button onClick={() => setCount(0)} variant={ButtonVariant.Reset}>Сброс</Button>
       </div>
     </div>
   );

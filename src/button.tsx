@@ -1,6 +1,9 @@
 import React from 'react';
 
-export type ButtonVariant = 'primary' | 'reset';
+export enum ButtonVariant {
+  Primary = 'primary',
+  Reset = 'reset'
+}
 
 interface ButtonProps {
   onClick: () => void;
@@ -8,7 +11,7 @@ interface ButtonProps {
   variant?: ButtonVariant;
 }
 
-const Button: React.FC<ButtonProps> = ({ onClick, children, variant = 'primary' }) => {
+const Button: React.FC<ButtonProps> = ({ onClick, children, variant = ButtonVariant.Primary }) => {
   return (
     <button onClick={onClick} className={`btn btn-${variant}`}>
       {children}

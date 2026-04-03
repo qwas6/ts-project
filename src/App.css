@@ -62,3 +62,13 @@ h2 {
   background: #e74c3c;
   color: white;
 }
+.btn-primary {
+  background: #3498db;
+  color: white;
+  min-width: 60px;
+}
+
+.btn-reset {
+  background: #e74c3c;
+  color: white;
+}
