@@ -17,4 +17,4 @@ const Counter: React.FC = () => {
   );
 };
 
-export default Counter;
+export default Counter; 
