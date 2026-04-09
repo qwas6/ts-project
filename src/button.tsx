@@ -19,4 +19,4 @@ const Button: React.FC<ButtonProps> = ({ onClick, children, variant = ButtonVari
   );
 };
 
-export default Button; 
+export default Button;  
