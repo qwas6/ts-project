@@ -1,60 +1,60 @@
 import React, { useState } from 'react';
-import Counter from './counter';
 import Button, { ButtonVariant } from './button';
 import './App.css';
 
-interface User {
+interface Product {
   id: number;
   name: string;
-  email: string;
-  age: number;
+  price: number;
+  description: string;
+  stock: number;
+  category: string;
 }
 
+type ProductCard = Pick<Product, 'id' | 'name' | 'price'>;
 
-type PartialUser = Partial<User>; 
+type OrderStatus = Record<'pending' | 'shipped' | 'delivered', string>;
 
-type PickedUser = Pick<User, 'name' | 'email'>; 
+const ShopPage: React.FC = () => {
+  const [selectedProduct, setSelectedProduct] = useState<string>('');
+  
+  const products: ProductCard[] = [
+    { id: 1, name: 'Ноутбук', price: 50000 },
+    { id: 2, name: 'Мышь', price: 1500 },
+    { id: 3, name: 'Клавиатура', price: 3000 }
+  ];
 
-type OmittedUser = Omit<User, 'id'>;  
-
-type RecordedUsers = Record<'user1' | 'user2', PickedUser>; 
-
-const App: React.FC = () => {
-  const [output, setOutput] = useState<string>('');
-
-  const partialExample: PartialUser = { name: 'Иван' };
-  const pickExample: PickedUser = { name: 'Анна', email: 'anna@mail.ru' };
-  const omitExample: OmittedUser = { name: 'Петр', email: 'petr@mail.ru', age: 25 };
-  const recordExample: RecordedUsers = {
-    user1: { name: 'Мария', email: 'maria@mail.ru' },
-    user2: { name: 'Сергей', email: 'sergey@mail.ru' }
+  const statuses: OrderStatus = {
+    pending: ' Ожидает',
+    shipped: ' В пути',
+    delivered: ' Доставлен'
   };
 
   return (
     <div className="app">
-      <Counter />
+      <h1> Интернет-магазин</h1>
       
       <div className="counter-section">
-        <div className="counter-value" style={{ minHeight: '60px' }}>
-          {output || 'Нажми на кнопку, чтобы увидеть результат'}
-        </div>
-        <div className="counter-buttons">
-          <Button onClick={() => setOutput(`имя - ${partialExample.name}`)}>
-              Кнопка 1
-          </Button>
-          <Button onClick={() => setOutput(`${pickExample.name}, ${pickExample.email}`)}>
-            Кнопка 2
-          </Button>
-          <Button onClick={() => setOutput(`${omitExample.name}, ${omitExample.age} лет, ${omitExample.email}`)}>
-            Кнопка 3
-          </Button>
-          <Button onClick={() => setOutput(`${recordExample.user1.name} и ${recordExample.user2.name}`)}>
-            Кнопка 4
-          </Button>
-        </div>
+        <h2>Товары</h2>
+        {products.map(product => (
+          <div key={product.id} style={{ padding: '10px', borderBottom: '1px solid #ccc' }}>
+            <strong>{product.name}</strong> - {product.price} ₽
+            <Button onClick={() => setSelectedProduct(product.name)}>
+              Выбрать
+            </Button>
+          </div>
+        ))}
+        {selectedProduct && <p>Выбран: {selectedProduct}</p>}
+      </div>
+
+      <div className="counter-section">
+        <h2>Статусы заказа</h2>
+        <p>Ожидает: {statuses.pending}</p>
+        <p> В пути: {statuses.shipped}</p>
+        <p> Доставлен: {statuses.delivered}</p>
       </div>
     </div>
   );
 };
 
-export default App;
+export default ShopPage;
