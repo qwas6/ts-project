@@ -37,28 +37,30 @@ class User {
 
     public setName(name: string): void {
         if (name.length > 32) {
-            this.name = name.slice(0, 32);
-        } else {
-            this.name = name;
+            throw new Error('Имя не должно превышать 32 символа');
         }
+        this.name = name;
     }
 
     public setAge(age: number): void {
-        if (age > 0 && age < 150) {
-            this.age = age;
+        if (age <= 0 || age >= 150) {
+            throw new Error('Возраст должен быть от 1 до 150 лет');
         }
+        this.age = age;
     }
 
     public setEmail(email: string): void {
-        if (email.includes('@') && email.includes('.')) {
-            this.email = email;
+        if (!email.includes('@') || !email.includes('.')) {
+            throw new Error('Email должен содержать @ и .');
         }
+        this.email = email;
     }
 
     public setAddress(address: Address): void {
-        if (address.city && address.street) {
-            this.address = address;
+        if (!address.city || !address.street) {
+            throw new Error('Адрес должен содержать город и улицу');
         }
+        this.address = address;
     }
 }
 
@@ -73,10 +75,12 @@ function App() {
     const handleChangeName = () => {
         const newName = prompt("Введите имя (max 32 символа):");
         if (newName) {
-            user.setName(newName);
-            setName(user.getName());
-            if (newName.length > 32) {
-                alert("Имя было обрезано до 32 символов");
+            try {
+                user.setName(newName);
+                setName(user.getName());
+            } catch (err) {
+                const error = err as Error;
+                alert(error.message);
             }
         }
     };
@@ -85,11 +89,12 @@ function App() {
         const newAge = prompt("Введите возраст (1-100):");
         if (newAge) {
             const ageNum = Number(newAge);
-            if (ageNum > 0 && ageNum < 101) {
+            try {
                 user.setAge(ageNum);
                 setAge(user.getAge());
-            } else {
-                alert("Некорректный возраст");
+            } catch (err) {
+                const error = err as Error;
+                alert(error.message);
             }
         }
     };
@@ -97,10 +102,12 @@ function App() {
     const handleChangeEmail = () => {
         const newEmail = prompt("Введите email:");
         if (newEmail) {
-            user.setEmail(newEmail);
-            setEmail(user.getEmail());
-            if (!newEmail.includes('@') || !newEmail.includes('.')) {
-                alert("Email не обновлен - неверный формат");
+            try {
+                user.setEmail(newEmail);
+                setEmail(user.getEmail());
+            } catch (err) {
+                const error = err as Error;
+                alert(error.message);
             }
         }
     };
@@ -109,12 +116,17 @@ function App() {
         const newCity = prompt("Введите город:");
         const newStreet = prompt("Введите улицу:");
         if (newCity && newStreet) {
-            user.setAddress({ city: newCity, street: newStreet });
-            setAddress(user.getAddress());
+            try {
+                user.setAddress({ city: newCity, street: newStreet });
+                setAddress(user.getAddress());
+            } catch (err) {
+                const error = err as Error;
+                alert(error.message);
+            }
         }
     };
 
-    return (
+    return ( 
         <div className="app">
             <h2>Пользователь</h2>
             <p>Имя: {name}</p>
