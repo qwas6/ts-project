@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+import { Toaster, toast } from 'react-hot-toast';
 
 interface Address {
     city: string;
@@ -78,9 +79,10 @@ function App() {
             try {
                 user.setName(newName);
                 setName(user.getName());
+                toast.success('Имя успешно изменено!');
             } catch (err) {
                 const error = err as Error;
-                alert(error.message);
+                toast.error(error.message);
             }
         }
     };
@@ -92,9 +94,10 @@ function App() {
             try {
                 user.setAge(ageNum);
                 setAge(user.getAge());
+                toast.success('Возраст успешно изменен!');
             } catch (err) {
                 const error = err as Error;
-                alert(error.message);
+                toast.error(error.message);
             }
         }
     };
@@ -105,9 +108,10 @@ function App() {
             try {
                 user.setEmail(newEmail);
                 setEmail(user.getEmail());
+                toast.success('Email успешно изменен!');
             } catch (err) {
                 const error = err as Error;
-                alert(error.message);
+                toast.error(error.message);
             }
         }
     };
@@ -119,15 +123,17 @@ function App() {
             try {
                 user.setAddress({ city: newCity, street: newStreet });
                 setAddress(user.getAddress());
+                toast.success('Адрес успешно изменен!');
             } catch (err) {
                 const error = err as Error;
-                alert(error.message);
+                toast.error(error.message);
             }
         }
     };
 
     return ( 
         <div className="app">
+            <Toaster position="top-right" />
             <h2>Пользователь</h2>
             <p>Имя: {name}</p>
             <p>Возраст: {age}</p>
