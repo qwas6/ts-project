@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -73,28 +73,13 @@ function App() {
     const [email, setEmail] = useState(user.getEmail());
     const [address, setAddress] = useState(user.getAddress());
 
-    useEffect(() => {
-        toast.success(`Имя изменено на: ${name}`);
-    }, [name]);
-
-    useEffect(() => {
-        toast.success(`Возраст изменен на: ${age}`);
-    }, [age]);
-
-    useEffect(() => {
-        toast.success(`Email изменен на: ${email}`);
-    }, [email]);
-
-    useEffect(() => {
-        toast.success(`Адрес изменен на: ${address.city}, ${address.street}`);
-    }, [address]);
-
     const handleChangeName = () => {
         const newName = prompt("Введите имя (max 32 символа):");
         if (newName) {
             try {
                 user.setName(newName);
                 setName(user.getName());
+                toast.success(`Имя изменено на: ${newName}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
@@ -109,6 +94,7 @@ function App() {
             try {
                 user.setAge(ageNum);
                 setAge(user.getAge());
+                toast.success(`Возраст изменен на: ${ageNum}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
@@ -122,6 +108,7 @@ function App() {
             try {
                 user.setEmail(newEmail);
                 setEmail(user.getEmail());
+                toast.success(`Email изменен на: ${newEmail}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
@@ -136,6 +123,7 @@ function App() {
             try {
                 user.setAddress({ city: newCity, street: newStreet });
                 setAddress(user.getAddress());
+                toast.success(`Адрес изменен на: ${newCity}, ${newStreet}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
