@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -26,7 +26,7 @@ class User {
 
     public getAge(): number {
         return this.age;
-    }
+    } 
 
     public getEmail(): string {
         return this.email;
@@ -65,13 +65,43 @@ class User {
     }
 }
 
-const user = new User("Алексей", 25, "alex@mail.com", { city: "Москва", street: "Тверская" });
+const user = new User("", 0, "", { city: "", street: "" });
 
 function App() {
     const [name, setName] = useState(user.getName());
     const [age, setAge] = useState(user.getAge());
     const [email, setEmail] = useState(user.getEmail());
     const [address, setAddress] = useState(user.getAddress());
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
+
+    useEffect(() => {
+        if (isFirstLoad) {
+            setIsFirstLoad(false);
+            return;
+        }
+        toast.success(`Имя изменено на: ${name}`);
+    }, [name]);
+
+    useEffect(() => {
+        if (isFirstLoad) {
+            return;
+        }
+        toast.success(`Возраст изменен на: ${age}`);
+    }, [age]);
+
+    useEffect(() => {
+        if (isFirstLoad) {
+            return;
+        }
+        toast.success(`Email изменен на: ${email}`);
+    }, [email]);
+
+    useEffect(() => {
+        if (isFirstLoad) {
+            return;
+        }
+        toast.success(`Адрес изменен на: ${address.city}, ${address.street}`);
+    }, [address]);
 
     const handleChangeName = () => {
         const newName = prompt("Введите имя (max 32 символа):");
@@ -79,7 +109,6 @@ function App() {
             try {
                 user.setName(newName);
                 setName(user.getName());
-                toast.success(`Имя изменено на: ${newName}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
@@ -94,7 +123,6 @@ function App() {
             try {
                 user.setAge(ageNum);
                 setAge(user.getAge());
-                toast.success(`Возраст изменен на: ${ageNum}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
@@ -108,7 +136,6 @@ function App() {
             try {
                 user.setEmail(newEmail);
                 setEmail(user.getEmail());
-                toast.success(`Email изменен на: ${newEmail}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
@@ -123,7 +150,6 @@ function App() {
             try {
                 user.setAddress({ city: newCity, street: newStreet });
                 setAddress(user.getAddress());
-                toast.success(`Адрес изменен на: ${newCity}, ${newStreet}`);
             } catch (err) {
                 const error = err as Error;
                 toast.error(error.message);
@@ -135,10 +161,10 @@ function App() {
         <div className="app">
             <Toaster position="top-right" />
             <h2>Пользователь</h2>
-            <p>Имя: {name}</p>
-            <p>Возраст: {age}</p>
-            <p>Email: {email}</p>
-            <p>Адрес: {address.city}, {address.street}</p>
+            <p>Имя: {name || ""}</p>
+            <p>Возраст: {age || ""}</p>
+            <p>Email: {email || ""}</p>
+            <p>Адрес: {address.city && address.street ? `${address.city}, ${address.street}` : ""}</p>
             <button onClick={handleChangeName}>Сменить имя</button>
             <button onClick={handleChangeAge}>Сменить возраст</button>
             <button onClick={handleChangeEmail}>Сменить email</button>
