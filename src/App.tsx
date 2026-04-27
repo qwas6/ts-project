@@ -67,11 +67,7 @@ class User {
 
 const user = new User("", 0, "", { city: "", street: "" });
 
-function App() {
-    const [name, setName] = useState(user.getName());
-    const [age, setAge] = useState(user.getAge());
-    const [email, setEmail] = useState(user.getEmail());
-    const [address, setAddress] = useState(user.getAddress());
+function useToastOnChange(value: any, message: string) {
     const [isFirstLoad, setIsFirstLoad] = useState(true);
 
     useEffect(() => {
@@ -79,29 +75,22 @@ function App() {
             setIsFirstLoad(false);
             return;
         }
-        toast.success(`Имя изменено на: ${name}`);
-    }, [name]);
-
-    useEffect(() => {
-        if (isFirstLoad) {
-            return;
+        if (value) {
+            toast.success(message);
         }
-        toast.success(`Возраст изменен на: ${age}`);
-    }, [age]);
+    }, [value]);
+}
 
-    useEffect(() => {
-        if (isFirstLoad) {
-            return;
-        }
-        toast.success(`Email изменен на: ${email}`);
-    }, [email]);
+function App() {
+    const [name, setName] = useState(user.getName());
+    const [age, setAge] = useState(user.getAge());
+    const [email, setEmail] = useState(user.getEmail());
+    const [address, setAddress] = useState(user.getAddress());
 
-    useEffect(() => {
-        if (isFirstLoad) {
-            return;
-        }
-        toast.success(`Адрес изменен на: ${address.city}, ${address.street}`);
-    }, [address]);
+    useToastOnChange(name, `Имя изменено на: ${name}`);
+    useToastOnChange(age, `Возраст изменен на: ${age}`);
+    useToastOnChange(email, `Email изменен на: ${email}`);
+    useToastOnChange(address.city && address.street, `Адрес изменен на: ${address.city}, ${address.street}`);
 
     const handleChangeName = () => {
         const newName = prompt("Введите имя (max 32 символа):");
