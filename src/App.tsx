@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -91,6 +91,16 @@ function App() {
     useToastOnChange(age, `Возраст изменен на: ${age}`);
     useToastOnChange(email, `Email изменен на: ${email}`);
     useToastOnChange(address.city && address.street, `Адрес изменен на: ${address.city}, ${address.street}`);
+
+    const userInfo = useMemo(() => {
+        console.log('useMemo');
+        return {
+            fullName: name,
+            userAge: age,
+            userEmail: email,
+            userAddress: `${address.city}, ${address.street}`
+        };
+    }, [name, age, email, address]);
 
     const handleChangeName = () => {
         const newName = prompt("Введите имя (max 32 символа):");
