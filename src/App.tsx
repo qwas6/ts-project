@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
@@ -8,10 +8,14 @@ function App() {
         return count * 2;
     }, [count]);
 
+    useEffect(() => {
+        if (count > 0) {
+            toast(`Счетчик: ${count}`);
+        }
+    }, [count]);
+
     const handleClick = () => {
-        const newCount = count + 1;
-        setCount(newCount);
-        toast(`Счетчик: ${newCount}`);
+        setCount(count + 1);
     };
 
     return (
