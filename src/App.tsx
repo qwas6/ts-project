@@ -2,6 +2,16 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import './App.css';
 
+
+interface University {
+    'state-province': string | null;
+    country: string;
+    domains: string[];
+    web_pages: string[];
+    name: string;
+}
+
+
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -18,9 +28,8 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-
 function useFetchUniversities(searchTerm: string) {
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<University[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +51,7 @@ function useFetchUniversities(searchTerm: string) {
                 throw new Error('Ошибка загрузки данных');
             }
             
-            const result = await response.json();
+            const result: University[] = await response.json();
             setData(result);
             toast.success(`Найдено ${result.length} университетов`);
         } catch (err) {
@@ -60,17 +69,15 @@ function useFetchUniversities(searchTerm: string) {
     return { data, isLoading, error, refetch: fetchData };
 }
 
-
 function App() {
     const [searchInput, setSearchInput] = useState('');
     const debouncedSearch = useDebounce(searchInput, 500);
     
     const { data: universities, isLoading, error } = useFetchUniversities(debouncedSearch);
 
-
     const filteredUniversities = useMemo(() => {
         if (!debouncedSearch) return universities;
-        return universities.filter(uni =>
+        return universities.filter((uni: University) =>
             uni.name.toLowerCase().includes(debouncedSearch.toLowerCase())
         );
     }, [universities, debouncedSearch]);
@@ -81,6 +88,7 @@ function App() {
             
             <div className="container">
                 <h1>🎓 Университеты США</h1>
+
                 
                 <div className="search-box">
                     <input
@@ -122,7 +130,7 @@ function App() {
 
                 {!isLoading && !error && filteredUniversities.length > 0 && (
                     <div className="universities-grid">
-                        {filteredUniversities.map((uni, index) => (
+                        {filteredUniversities.map((uni: University, index: number) => (
                             <div key={`${uni.name}-${index}`} className="university-card">
                                 <h3>{uni.name}</h3>
                                 <div className="card-details">
