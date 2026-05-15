@@ -4,7 +4,7 @@
     box-sizing: border-box;
 }
 
-body { 
+body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
@@ -20,105 +20,152 @@ body {
     margin: 0 auto;
 }
 
-h1 {
+header {
     text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
     color: white;
     font-size: 2.5rem;
     margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
-.subtitle {
-    text-align: center;
+header p {
     color: rgba(255,255,255,0.9);
-    margin-bottom: 40px;
     font-size: 1.1rem;
 }
 
-.search-box {
-    margin-bottom: 40px;
-    position: relative;
+
+.add-crypto {
+    margin-bottom: 30px;
+    text-align: center;
 }
 
-.search-input {
-    width: 100%;
-    padding: 15px 20px;
-    font-size: 1.1rem;
+.crypto-select {
+    padding: 12px 24px;
+    font-size: 1rem;
     border: none;
     border-radius: 50px;
     background: white;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s;
 }
 
-.search-input:focus {
-    outline: none;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+.crypto-select:hover {
     transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
 }
 
-.search-hint {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #667eea;
-    font-size: 0.85rem;
-    font-weight: 500;
-    background: #f0f0f0;
-    padding: 4px 10px;
-    border-radius: 20px;
+
+.crypto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
 }
 
-.loading {
-    text-align: center;
-    padding: 60px 20px;
+
+.crypto-card {
     background: white;
     border-radius: 20px;
-    margin-top: 30px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 20px;
+.crypto-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
 }
 
-.error {
-    text-align: center;
-    padding: 40px;
-    background: white;
-    border-radius: 20px;
-    margin-top: 30px;
+.crypto-info h3 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.price {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.price.positive {
+    color: #27ae60;
+}
+
+.price.negative {
     color: #e74c3c;
 }
 
-.error button {
-    margin-top: 20px;
-    padding: 10px 25px;
-    background: #667eea;
+.change {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.change.positive {
+    color: #27ae60;
+}
+
+.change.negative {
+    color: #e74c3c;
+}
+
+
+.remove-btn {
+    width: 32px;
+    height: 32px;
+    background: #e74c3c;
     color: white;
     border: none;
-    border-radius: 25px;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.3s;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
 }
 
-.error button:hover {
-    background: #5a67d8;
+.remove-btn:hover {
+    background: #c0392b;
+    transform: scale(1.05);
 }
 
-.no-results, .placeholder {
+.chart-toggle {
+    width: 100%;
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    margin-bottom: 15px;
+}
+
+.chart-toggle:hover {
+    background: #e9ecef;
+}
+
+
+.chart-container {
+    margin-top: 10px;
+    padding: 10px 0;
+}
+
+
+.placeholder {
     text-align: center;
     padding: 60px 20px;
     background: white;
@@ -127,84 +174,36 @@ h1 {
     color: #666;
 }
 
-.no-results p:first-child {
+.placeholder p:first-child {
     font-size: 1.5rem;
     margin-bottom: 10px;
 }
 
-.example {
-    margin-top: 15px;
-    color: #999;
-    font-size: 0.9rem;
-}
 
-.universities-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 25px;
-    margin-top: 30px;
-}
-
-.university-card {
-    background: white;
-    border-radius: 15px;
+.info {
+    text-align: center;
     padding: 20px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.university-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-}
-
-.university-card h3 {
-    color: #333;
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-    line-height: 1.4;
-}
-
-.card-details {
-    margin-bottom: 15px;
-}
-
-.state {
-    color: #667eea;
+    background: rgba(255,255,255,0.95);
+    border-radius: 15px;
+    margin-top: 30px;
+    color: #555;
     font-size: 0.9rem;
-    margin-bottom: 5px;
 }
 
-.domain {
-    color: #888;
-    font-size: 0.85rem;
-    font-family: monospace;
-}
-
-.card-link {
-    display: inline-block;
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: color 0.3s;
-}
-
-.card-link:hover {
-    color: #5a67d8;
-    text-decoration: underline;
+.info p {
+    margin: 5px 0;
 }
 
 @media (max-width: 768px) {
-    h1 {
-        font-size: 1.8rem;
-    }
-    
-    .universities-grid {
+    .crypto-grid {
         grid-template-columns: 1fr;
     }
     
-    .search-input {
-        font-size: 1rem;
+    header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .price {
+        font-size: 1.4rem;
     }
 }
