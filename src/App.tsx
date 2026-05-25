@@ -3,10 +3,15 @@ import { Toaster, toast } from 'react-hot-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './App.css';
 
-
 interface ChartData {
     time: string;
     price: number;
+    timestamp: number;
+}
+
+interface PriceData {
+    price: number;
+    change: number;
 }
 
 
@@ -60,88 +65,98 @@ function CryptoCard({ symbol, price, change, history, onRemove }: {
     );
 }
 
-function useCryptoPrices() {
-    const [prices, setPrices] = useState<Map<string, { price: number; change: number }>>(new Map());
+
+function useBinanceWebSocket() {
+    const [prices, setPrices] = useState<Map<string, PriceData>>(new Map());
     const [history, setHistory] = useState<Map<string, ChartData[]>>(new Map());
-    const intervalRef = useRef<any>(null);
+    const wsRef = useRef<WebSocket | null>(null);
     const previousPricesRef = useRef<Map<string, number>>(new Map());
 
-    const generatePrice = (symbol: string): number => {
-        const basePrices: Record<string, number> = {
-            BTC: 65000,
-            ETH: 3200,
-            BNB: 580,
-            SOL: 160,
-            DOGE: 0.15
-        };
-        
-        const volatility: Record<string, number> = {
-            BTC: 0.02,
-            ETH: 0.025,
-            BNB: 0.03,
-            SOL: 0.04,
-            DOGE: 0.05
-        };
-        
-        const currentPrice = previousPricesRef.current.get(symbol) || basePrices[symbol];
-        const change = (Math.random() - 0.5) * 2 * (volatility[symbol] || 0.03);
-        let newPrice = currentPrice * (1 + change);
-    
 
-        newPrice = Math.max(newPrice, currentPrice * 0.95);
-        newPrice = Math.min(newPrice, currentPrice * 1.05);
-        
-        return newPrice;
+    const getBinanceSymbol = (symbol: string): string => {
+        const map: Record<string, string> = {
+            BTC: 'btcusdt',
+            ETH: 'ethusdt',
+            BNB: 'bnbusdt',
+            SOL: 'solusdt',
+            DOGE: 'dogeusdt'
+        };
+        return map[symbol];
     };
 
     useEffect(() => {
-        const symbols = ['BTC', 'ETH', 'BNB', 'SOL', 'DOGE'];
-        const initialPrices: Map<string, { price: number; change: number }> = new Map();
-        symbols.forEach(symbol => {
-            const basePrice = symbol === 'BTC' ? 65000 :
-                            symbol === 'ETH' ? 3200 :
-                            symbol === 'BNB' ? 580 :
-                            symbol === 'SOL' ? 160 : 0.15;
-            initialPrices.set(symbol, { price: basePrice, change: 0 });
-            previousPricesRef.current.set(symbol, basePrice);
-        });
-        setPrices(initialPrices);
+        const symbols = ['btcusdt', 'ethusdt', 'bnbusdt', 'solusdt', 'dogeusdt'];
+        const streamUrl = `wss://stream.binance.com:9443/stream?streams=${symbols.map(s => `${s}@trade`).join('/')}`;
+        
+        const ws = new WebSocket(streamUrl);
+        wsRef.current = ws;
 
+        ws.onopen = () => {
+            console.log('✅ Binance WebSocket подключен (реальные цены)');
+            toast.success('Реальные цены загружены!');
+        };
 
-        intervalRef.current = setInterval(() => {
-            setPrices(prevPrices => {
-                const newPrices = new Map(prevPrices);
-                const symbols = ['BTC', 'ETH', 'BNB', 'SOL', 'DOGE'];
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.data && data.data.e === 'trade') {
+                    const trade = data.data;
+                    const symbolRaw = trade.s; 
+                    let symbol = '';
+                    
+                    if (symbolRaw === 'BTCUSDT') symbol = 'BTC';
+                    else if (symbolRaw === 'ETHUSDT') symbol = 'ETH';
+                    else if (symbolRaw === 'BNBUSDT') symbol = 'BNB';
+                    else if (symbolRaw === 'SOLUSDT') symbol = 'SOL';
+                    else if (symbolRaw === 'DOGEUSDT') symbol = 'DOGE';
+                    else return;
+                    
+                    const price = parseFloat(trade.p);
+                    const tradeTime = trade.T;
+                    
                 
-                symbols.forEach(symbol => {
-                    const oldPrice = previousPricesRef.current.get(symbol) || 0;
-                    const newPrice = generatePrice(symbol);
-                    const change = ((newPrice - oldPrice) / oldPrice) * 100;
+                    const oldPrice = previousPricesRef.current.get(symbol) || price;
+                    const change = ((price - oldPrice) / oldPrice) * 100;
                     
-                    newPrices.set(symbol, { price: newPrice, change });
-                    previousPricesRef.current.set(symbol, newPrice);
                     
+                    setPrices(prev => {
+                        const newPrices = new Map(prev);
+                        newPrices.set(symbol, { price, change });
+                        return newPrices;
+                    });
+                    
+                    previousPricesRef.current.set(symbol, price);
                     
                     setHistory(prevHistory => {
                         const newHistory = new Map(prevHistory);
                         const currentHistory = newHistory.get(symbol) || [];
-                        const newPoint = {
-                            time: new Date().toLocaleTimeString(),
-                            price: newPrice
+                        const newPoint: ChartData = {
+                            time: new Date(tradeTime).toLocaleTimeString(),
+                            price: price,
+                            timestamp: tradeTime
                         };
-                        const updated = [...currentHistory, newPoint].slice(-30);
+                        const updated = [...currentHistory, newPoint].slice(-50);
                         newHistory.set(symbol, updated);
                         return newHistory;
                     });
-                });
-                
-                return newPrices;
-            });
-        }, 1000);
+                }
+            } catch (err) {
+                console.error('Ошибка обработки данных:', err);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('❌ WebSocket ошибка:', error);
+            toast.error('Ошибка подключения к Binance');
+        };
+
+        ws.onclose = () => {
+            console.log('🔌 WebSocket отключен');
+        };
 
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
+            if (wsRef.current) {
+                wsRef.current.close();
             }
         };
     }, []);
@@ -160,7 +175,7 @@ function App() {
         { symbol: 'DOGE', name: 'Dogecoin' }
     ]);
 
-    const { prices, history } = useCryptoPrices();
+    const { prices, history } = useBinanceWebSocket();
 
     const addCrypto = (symbol: string) => {
         if (!selectedCryptos.includes(symbol)) {
