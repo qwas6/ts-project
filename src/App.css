@@ -207,3 +207,112 @@ header p {
         font-size: 1.4rem;
     }
 }
+.main-layout {
+    display: flex;
+    gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.main-content {
+    flex: 3;
+    min-width: 0;
+}
+
+
+.history-log {
+    flex: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    height: calc(100vh - 80px);
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.history-log h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1.2rem;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+.history-item:hover {
+    background: #e9ecef;
+}
+
+.history-time {
+    color: #888;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.history-symbol {
+    font-weight: bold;
+    color: #667eea;
+}
+
+.history-price {
+    font-weight: 600;
+    color: #27ae60;
+}
+
+.history-empty {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}
+
+/* Скроллбар для истории */
+.history-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+@media (max-width: 1000px) {
+    .main-layout {
+        flex-direction: column;
+    }
+    
+    .history-log {
+        position: static;
+        height: auto;
+        max-height: 300px;
+    }
+    
+    .history-list {
+        max-height: 200px;
+    }
+}

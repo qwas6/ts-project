@@ -14,6 +14,11 @@ interface PriceData {
     change: number;
 }
 
+interface HistoryItem {
+    symbol: string;
+    price: number;
+    time: string;
+}
 
 function CryptoCard({ symbol, price, change, history, onRemove }: { 
     symbol: string; 
@@ -66,23 +71,42 @@ function CryptoCard({ symbol, price, change, history, onRemove }: {
 }
 
 
+function HistoryLog({ history }: { history: HistoryItem[] }) {
+    const logRef = useRef<HTMLDivElement>(null);
+
+
+    useEffect(() => {
+        if (logRef.current) {
+            logRef.current.scrollTop = logRef.current.scrollHeight;
+        }
+    }, [history]);
+
+    return (
+        <div className="history-log">
+            <h3>📋 История цен</h3>
+            <div className="history-list" ref={logRef}>
+                {history.length === 0 ? (
+                    <p className="history-empty">Ожидание данных...</p>
+                ) : (
+                    history.map((item, index) => (
+                        <div key={index} className="history-item">
+                            <span className="history-time">{item.time}</span>
+                            <span className="history-symbol">{item.symbol}</span>
+                            <span className="history-price">${item.price.toLocaleString()}</span>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
+
 function useBinanceWebSocket() {
     const [prices, setPrices] = useState<Map<string, PriceData>>(new Map());
     const [history, setHistory] = useState<Map<string, ChartData[]>>(new Map());
+    const [priceLog, setPriceLog] = useState<HistoryItem[]>([]);
     const wsRef = useRef<WebSocket | null>(null);
     const previousPricesRef = useRef<Map<string, number>>(new Map());
-
-
-    const getBinanceSymbol = (symbol: string): string => {
-        const map: Record<string, string> = {
-            BTC: 'btcusdt',
-            ETH: 'ethusdt',
-            BNB: 'bnbusdt',
-            SOL: 'solusdt',
-            DOGE: 'dogeusdt'
-        };
-        return map[symbol];
-    };
 
     useEffect(() => {
         const symbols = ['btcusdt', 'ethusdt', 'bnbusdt', 'solusdt', 'dogeusdt'];
@@ -92,8 +116,7 @@ function useBinanceWebSocket() {
         wsRef.current = ws;
 
         ws.onopen = () => {
-            console.log('✅ Binance WebSocket подключен (реальные цены)');
-            toast.success('Реальные цены загружены!');
+            console.log('✅ Binance WebSocket подключен');
         };
 
         ws.onmessage = (event) => {
@@ -101,7 +124,7 @@ function useBinanceWebSocket() {
                 const data = JSON.parse(event.data);
                 if (data.data && data.data.e === 'trade') {
                     const trade = data.data;
-                    const symbolRaw = trade.s; 
+                    const symbolRaw = trade.s;
                     let symbol = '';
                     
                     if (symbolRaw === 'BTCUSDT') symbol = 'BTC';
@@ -113,11 +136,16 @@ function useBinanceWebSocket() {
                     
                     const price = parseFloat(trade.p);
                     const tradeTime = trade.T;
+                    const timeStr = new Date(tradeTime).toLocaleTimeString();
                     
                 
+                    setPriceLog(prev => {
+                        const newLog = [{ symbol, price, time: timeStr }, ...prev].slice(0, 100);
+                        return newLog;
+                    });
+                    
                     const oldPrice = previousPricesRef.current.get(symbol) || price;
                     const change = ((price - oldPrice) / oldPrice) * 100;
-                    
                     
                     setPrices(prev => {
                         const newPrices = new Map(prev);
@@ -131,7 +159,7 @@ function useBinanceWebSocket() {
                         const newHistory = new Map(prevHistory);
                         const currentHistory = newHistory.get(symbol) || [];
                         const newPoint: ChartData = {
-                            time: new Date(tradeTime).toLocaleTimeString(),
+                            time: timeStr,
                             price: price,
                             timestamp: tradeTime
                         };
@@ -161,9 +189,8 @@ function useBinanceWebSocket() {
         };
     }, []);
 
-    return { prices, history };
+    return { prices, history, priceLog };
 }
-
 
 function App() {
     const [selectedCryptos, setSelectedCryptos] = useState<string[]>(['BTC', 'ETH', 'BNB']);
@@ -175,7 +202,7 @@ function App() {
         { symbol: 'DOGE', name: 'Dogecoin' }
     ]);
 
-    const { prices, history } = useBinanceWebSocket();
+    const { prices, history, priceLog } = useBinanceWebSocket();
 
     const addCrypto = (symbol: string) => {
         if (!selectedCryptos.includes(symbol)) {
@@ -195,59 +222,66 @@ function App() {
         <div className="app">
             <Toaster position="top-right" />
             
-            <div className="container">
-                <header>
-                    <h1>🚀 Crypto Live Tracker</h1>
-                </header>
+            <div className="main-layout">
+                <div className="main-content">
+                    <header>
+                        <h1>🚀 Crypto Live Tracker</h1>
+                        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>
+                        </p>
+                    </header>
 
-                <div className="add-crypto">
-                    <select 
-                        onChange={(e) => {
-                            if (e.target.value) {
-                                addCrypto(e.target.value);
-                                e.target.value = '';
-                            }
-                        }}
-                        className="crypto-select"
-                        defaultValue=""
-                    >
-                        <option value="" disabled>➕ Добавить криптовалюту</option>
-                        {availableCryptos
-                            .filter(c => !selectedCryptos.includes(c.symbol))
-                            .map(c => (
-                                <option key={c.symbol} value={c.symbol}>
-                                    {c.name} ({c.symbol})
-                                </option>
-                            ))}
-                    </select>
-                </div>
-
-                <div className="crypto-grid">
-                    {selectedCryptos.map(symbol => {
-                        const data = prices.get(symbol);
-                        const price = data?.price || 0;
-                        const change = data?.change || 0;
-                        const historyData = history.get(symbol) || [];
-                        
-                        return (
-                            <CryptoCard
-                                key={symbol}
-                                symbol={symbol}
-                                price={price}
-                                change={change}
-                                history={historyData}
-                                onRemove={() => removeCrypto(symbol)}
-                            />
-                        );
-                    })}
-                </div>
-
-                {selectedCryptos.length === 0 && (
-                    <div className="placeholder">
-                        <p>🔍 Нет отслеживаемых криптовалют</p>
-                        <p>Добавьте первую монету из списка выше</p>
+                    <div className="add-crypto">
+                        <select 
+                            onChange={(e) => {
+                                if (e.target.value) {
+                                    addCrypto(e.target.value);
+                                    e.target.value = '';
+                                }
+                            }}
+                            className="crypto-select"
+                            defaultValue=""
+                        >
+                            <option value="" disabled>➕ Добавить криптовалюту</option>
+                            {availableCryptos
+                                .filter(c => !selectedCryptos.includes(c.symbol))
+                                .map(c => (
+                                    <option key={c.symbol} value={c.symbol}>
+                                        {c.name} ({c.symbol})
+                                    </option>
+                                ))}
+                        </select>
                     </div>
-                )}
+
+                    <div className="crypto-grid">
+                        {selectedCryptos.map(symbol => {
+                            const data = prices.get(symbol);
+                            const price = data?.price || 0;
+                            const change = data?.change || 0;
+                            const historyData = history.get(symbol) || [];
+                            
+                            return (
+                                <CryptoCard
+                                    key={symbol}
+                                    symbol={symbol}
+                                    price={price}
+                                    change={change}
+                                    history={historyData}
+                                    onRemove={() => removeCrypto(symbol)}
+                                />
+                            );
+                        })}
+                    </div>
+
+                    {selectedCryptos.length === 0 && (
+                        <div className="placeholder">
+                            <p>🔍 Нет отслеживаемых криптовалют</p>
+                            <p>Добавьте первую монету из списка выше</p>
+                        </div>
+                    )}
+                </div>
+
+              
+                <HistoryLog history={priceLog} />
             </div>
         </div>
     );
