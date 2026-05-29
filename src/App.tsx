@@ -70,10 +70,8 @@ function CryptoCard({ symbol, price, change, history, onRemove }: {
     );
 }
 
-
 function HistoryLog({ history }: { history: HistoryItem[] }) {
     const logRef = useRef<HTMLDivElement>(null);
-
 
     useEffect(() => {
         if (logRef.current) {
@@ -101,6 +99,80 @@ function HistoryLog({ history }: { history: HistoryItem[] }) {
     );
 }
 
+function HistoryChart({ history }: { history: HistoryItem[] }) {
+    const [selectedSymbol, setSelectedSymbol] = useState<string>('all');
+
+    const symbols = ['all', 'BTC', 'ETH', 'BNB', 'SOL', 'DOGE'];
+    
+    const filteredHistory = selectedSymbol === 'all' 
+        ? history 
+        : history.filter(item => item.symbol === selectedSymbol);
+
+    const chartData = filteredHistory.slice().reverse().map((item, index) => ({
+        time: item.time,
+        price: item.price,
+        symbol: item.symbol
+    }));
+
+    const getColorForSymbol = (symbol: string) => {
+        const colors: Record<string, string> = {
+            BTC: '#f7931a',
+            ETH: '#627eea',
+            BNB: '#f3ba2f',
+            SOL: '#00ffbd',
+            DOGE: '#c3a634'
+        };
+        return colors[symbol] || '#667eea';
+    };
+
+    if (chartData.length === 0) {
+        return (
+            <div className="history-chart">
+                <h3>📊 График истории цен</h3>
+                <div className="history-chart-container">
+                    <p style={{ textAlign: 'center', padding: '100px', color: '#999' }}>
+                        Нет данных для отображения
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="history-chart">
+            <h3>📊 График истории цен</h3>
+            <div className="chart-symbol-buttons">
+                {symbols.map(sym => (
+                    <button
+                        key={sym}
+                        className={`chart-symbol-btn ${selectedSymbol === sym ? 'active' : ''}`}
+                        onClick={() => setSelectedSymbol(sym)}
+                    >
+                        {sym === 'all' ? 'Все' : sym}
+                    </button>
+                ))}
+            </div>
+            <div className="history-chart-container">
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={Math.floor(chartData.length / 10)} />
+                        <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Line 
+                            type="monotone" 
+                            dataKey="price" 
+                            stroke={selectedSymbol === 'all' ? '#667eea' : getColorForSymbol(selectedSymbol)} 
+                            strokeWidth={2} 
+                            dot={false} 
+                            name={selectedSymbol === 'all' ? 'Цена' : selectedSymbol}
+                        />
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+    );
+}
 function useBinanceWebSocket() {
     const [prices, setPrices] = useState<Map<string, PriceData>>(new Map());
     const [history, setHistory] = useState<Map<string, ChartData[]>>(new Map());
@@ -138,7 +210,6 @@ function useBinanceWebSocket() {
                     const tradeTime = trade.T;
                     const timeStr = new Date(tradeTime).toLocaleTimeString();
                     
-                
                     setPriceLog(prev => {
                         const newLog = [{ symbol, price, time: timeStr }, ...prev].slice(0, 100);
                         return newLog;
@@ -280,8 +351,10 @@ function App() {
                     )}
                 </div>
 
-              
-                <HistoryLog history={priceLog} />
+                <div className="right-sidebar">
+                    <HistoryLog history={priceLog} />
+                    <HistoryChart history={priceLog} />
+                </div>
             </div>
         </div>
     );
