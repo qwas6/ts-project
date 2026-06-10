@@ -5,18 +5,14 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-}
-
-.app {
-    min-height: 100vh;
-    padding: 40px 20px;
+    padding: 20px;
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -28,22 +24,15 @@ header {
 header h1 {
     color: white;
     font-size: 2.5rem;
-    margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
-header p {
-    color: rgba(255,255,255,0.9);
-    font-size: 1.1rem;
-}
-
-
 .add-crypto {
-    margin-bottom: 30px;
     text-align: center;
+    margin-bottom: 30px;
 }
 
-.crypto-select {
+.add-crypto select {
     padding: 12px 24px;
     font-size: 1rem;
     border: none;
@@ -54,31 +43,28 @@ header p {
     transition: all 0.3s;
 }
 
-.crypto-select:hover {
+.add-crypto select:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(0,0,0,0.15);
 }
 
-
 .crypto-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
     gap: 25px;
     margin-bottom: 30px;
 }
-
 
 .crypto-card {
     background: white;
     border-radius: 20px;
     padding: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: transform 0.3s;
 }
 
 .crypto-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
 }
 
 .card-header {
@@ -97,30 +83,13 @@ header p {
 .price {
     font-size: 1.8rem;
     font-weight: bold;
-    margin-bottom: 5px;
 }
 
-.price.positive {
-    color: #27ae60;
-}
-
-.price.negative {
-    color: #e74c3c;
-}
-
-.change {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.change.positive {
-    color: #27ae60;
-}
-
-.change.negative {
-    color: #e74c3c;
-}
-
+.price.positive { color: #27ae60; }
+.price.negative { color: #e74c3c; }
+.change { font-weight: 600; }
+.change.positive { color: #27ae60; }
+.change.negative { color: #e74c3c; }
 
 .remove-btn {
     width: 32px;
@@ -131,9 +100,6 @@ header p {
     border-radius: 50%;
     cursor: pointer;
     font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     transition: all 0.3s;
 }
 
@@ -149,104 +115,68 @@ header p {
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.3s;
     margin-bottom: 15px;
+    transition: all 0.3s;
 }
 
 .chart-toggle:hover {
     background: #e9ecef;
 }
 
+.chart-type-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 8px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.type-btn.active {
+    background: #667eea;
+    color: white;
+}
+
+.type-btn:hover:not(.active) {
+    background: #e0e0e0;
+}
 
 .chart-container {
     margin-top: 10px;
-    padding: 10px 0;
+    min-height: 350px;
 }
 
-
-.placeholder {
-    text-align: center;
-    padding: 60px 20px;
-    background: white;
-    border-radius: 20px;
-    margin-top: 30px;
-    color: #666;
-}
-
-.placeholder p:first-child {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-}
-
-
-.info {
-    text-align: center;
-    padding: 20px;
-    background: rgba(255,255,255,0.95);
-    border-radius: 15px;
-    margin-top: 30px;
-    color: #555;
-    font-size: 0.9rem;
-}
-
-.info p {
-    margin: 5px 0;
-}
-
-@media (max-width: 768px) {
-    .crypto-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    header h1 {
-        font-size: 1.8rem;
-    }
-    
-    .price {
-        font-size: 1.4rem;
-    }
-}
-.main-layout {
+.sidebar {
     display: flex;
     gap: 20px;
-    max-width: 1600px;
-    margin: 0 auto;
+    margin-top: 30px;
 }
 
-.main-content {
-    flex: 3;
-    min-width: 0;
-}
-
-
-.history-log {
+.history-log, .history-chart {
     flex: 1;
     background: white;
     border-radius: 20px;
     padding: 20px;
-    height: auto;
-    max-height: 500px;
-    display: flex;
-    flex-direction: column;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-.history-log h3 {
-    margin: 0 0 15px 0;
-    color: #333;
-    font-size: 1.2rem;
+.history-log h3, .history-chart h3 {
+    margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 2px solid #667eea;
+    color: #333;
 }
 
 .history-list {
+    max-height: 300px;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 400px;
-    min-height: 400px;
 }
 
 .history-item {
@@ -255,19 +185,14 @@ header p {
     align-items: center;
     padding: 8px 12px;
     background: #f8f9fa;
-    border-radius: 10px;
+    border-radius: 8px;
+    margin-bottom: 5px;
     font-size: 13px;
-    transition: background 0.2s;
-}
-
-.history-item:hover {
-    background: #e9ecef;
 }
 
 .history-time {
     color: #888;
     font-family: monospace;
-    font-size: 11px;
 }
 
 .history-symbol {
@@ -280,13 +205,31 @@ header p {
     color: #27ae60;
 }
 
-.history-empty {
-    text-align: center;
-    color: #999;
-    padding: 20px;
+.symbol-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
-/* Скроллбар для истории */
+.sym-btn {
+    padding: 5px 12px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.sym-btn.active {
+    background: #667eea;
+    color: white;
+}
+
+.sym-btn:hover:not(.active) {
+    background: #e0e0e0;
+}
+
 .history-list::-webkit-scrollbar {
     width: 6px;
 }
@@ -302,70 +245,21 @@ header p {
 }
 
 @media (max-width: 1000px) {
-    .main-layout {
+    .sidebar {
         flex-direction: column;
     }
-    
-    .history-log {
-        position: static;
-        height: auto;
-        max-height: 300px;
+}
+
+@media (max-width: 768px) {
+    .crypto-grid {
+        grid-template-columns: 1fr;
     }
     
-    .history-list {
-        max-height: 200px;
+    header h1 {
+        font-size: 1.8rem;
     }
-}.right-sidebar {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.history-chart {
-    background: white;
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.history-chart h3 {
-    margin: 0 0 15px 0;
-    color: #333;
-    font-size: 1.2rem;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #667eea;
-}
-
-.history-chart-container {
-    width: 100%;
-    height: 300px;
-}
-
-.history-item {
-    gap: 12px;
-}.chart-symbol-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.chart-symbol-btn {
-    padding: 5px 12px;
-    background: #f0f0f0;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.3s;
-}
-
-.chart-symbol-btn:hover {
-    background: #e0e0e0;
-}
-
-.chart-symbol-btn.active {
-    background: #667eea;
-    color: white;
+    
+    .price {
+        font-size: 1.4rem;
+    }
 }
