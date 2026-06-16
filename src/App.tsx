@@ -28,51 +28,53 @@ interface HistoryItem {
     timestamp: number;
 }
 
-interface PriceData {
-    price: number;
-    change: number;
-}
+type Timeframe = '5s' | '10s' | '30s' | '1m' | '5m';
 
-function CandlestickChart({ data }: { data: CandleData[] }) {
-    const chartRef = useRef<HTMLDivElement>(null);
+const TIMEFRAME_CONFIG: Record<Timeframe, { ms: number; label: string }> = {
+    '5s': { ms: 5000, label: '5 сек' },
+    '10s': { ms: 10000, label: '10 сек' },
+    '30s': { ms: 30000, label: '30 сек' },
+    '1m': { ms: 60000, label: '1 мин' },
+    '5m': { ms: 300000, label: '5 мин' }
+};
+
+const CandlestickChart = React.memo(({ data }: { data: CandleData[] }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
     useEffect(() => {
-        if (!chartRef.current) return;
+        if (!containerRef.current) return;
         
         const resizeObserver = new ResizeObserver((entries) => {
             for (let entry of entries) {
                 const { width, height } = entry.contentRect;
-                setDimensions({ width, height });
+                setDimensions({ width: width - 20, height: 350 });
             }
         });
         
-        resizeObserver.observe(chartRef.current);
+        resizeObserver.observe(containerRef.current);
         return () => resizeObserver.disconnect();
     }, []);
 
     useEffect(() => {
-        if (!chartRef.current || dimensions.width === 0 || dimensions.height === 0 || data.length === 0) return;
+        if (!canvasRef.current || dimensions.width === 0 || dimensions.height === 0 || data.length === 0) return;
         
-        const canvas = document.getElementById('candle-canvas') as HTMLCanvasElement;
-        if (!canvas) return;
-        
-        canvas.width = dimensions.width;
-        canvas.height = dimensions.height;
+        const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         
+        canvas.width = dimensions.width;
+        canvas.height = dimensions.height;
         
         ctx.clearRect(0, 0, dimensions.width, dimensions.height);
         
-        
-        const padding = { top: 20, right: 50, bottom: 30, left: 50 };
+        const padding = { top: 20, right: 40, bottom: 40, left: 45 };
         const chartWidth = dimensions.width - padding.left - padding.right;
         const chartHeight = dimensions.height - padding.top - padding.bottom;
         
         if (chartWidth <= 0 || chartHeight <= 0) return;
         
-
         let minPrice = Infinity;
         let maxPrice = -Infinity;
         data.forEach(candle => {
@@ -85,10 +87,10 @@ function CandlestickChart({ data }: { data: CandleData[] }) {
             return padding.top + chartHeight - ((price - minPrice) / priceRange) * chartHeight;
         };
         
-        
-        ctx.strokeStyle = '#e0e0e0';
+        ctx.strokeStyle = '#e2e8f0';
         ctx.lineWidth = 0.5;
-        
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px Inter, system-ui';
         
         const gridLines = 5;
         for (let i = 0; i <= gridLines; i++) {
@@ -98,39 +100,16 @@ function CandlestickChart({ data }: { data: CandleData[] }) {
             ctx.lineTo(dimensions.width - padding.right, y);
             ctx.stroke();
             
-    
             const price = maxPrice - (priceRange / gridLines) * i;
-            ctx.fillStyle = '#999';
-            ctx.font = '10px Arial';
             ctx.fillText(`$${price.toFixed(0)}`, 5, y + 3);
         }
         
-
-        const candleWidth = chartWidth / data.length;
-        for (let i = 0; i <= data.length; i++) {
-            const x = padding.left + (chartWidth / data.length) * i;
-            ctx.beginPath();
-            ctx.moveTo(x, padding.top);
-            ctx.lineTo(x, dimensions.height - padding.bottom);
-            ctx.stroke();
-            
-            
-            if (i < data.length) {
-                ctx.fillStyle = '#999';
-                ctx.font = '8px Arial';
-                const timeText = data[i].time;
-                ctx.save();
-                ctx.translate(x + candleWidth / 2, dimensions.height - padding.bottom + 10);
-                ctx.rotate(-0.5);
-                ctx.fillText(timeText, 0, 0);
-                ctx.restore();
-            }
-        }
-        
+        const candleWidth = Math.max(chartWidth / data.length - 2, 3);
+        const candleSpacing = Math.max((chartWidth / data.length - candleWidth) / 2, 1);
         
         for (let i = 0; i < data.length; i++) {
             const candle = data[i];
-            const x = padding.left + (i * candleWidth);
+            const x = padding.left + (i * (candleWidth + candleSpacing * 2)) + candleSpacing;
             const centerX = x + candleWidth / 2;
             const isGreen = candle.close >= candle.open;
             
@@ -143,61 +122,75 @@ function CandlestickChart({ data }: { data: CandleData[] }) {
             const bodyBottom = Math.max(openY, closeY);
             const bodyHeight = Math.max(Math.abs(closeY - openY), 1);
             
-    
-            const bodyColor = isGreen ? '#26a69a' : '#ef5350';
-            const wickColor = '#666';
-    
+            const bodyColor = isGreen ? '#22c55e' : '#ef4444';
+            const wickColor = '#64748b';
+            
             ctx.beginPath();
             ctx.moveTo(centerX, highY);
             ctx.lineTo(centerX, bodyTop);
             ctx.strokeStyle = wickColor;
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1;
             ctx.stroke();
-            
             
             ctx.beginPath();
             ctx.moveTo(centerX, bodyBottom);
             ctx.lineTo(centerX, lowY);
             ctx.stroke();
             
-            
-            const bodyWidth = Math.max(candleWidth * 0.6, 3);
+            const bodyWidth = Math.max(candleWidth * 0.7, 2);
             ctx.fillStyle = bodyColor;
             ctx.fillRect(centerX - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
             
-    
-            ctx.strokeStyle = bodyColor;
-            ctx.strokeRect(centerX - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
+            if (bodyHeight < 2) {
+                ctx.strokeStyle = bodyColor;
+                ctx.strokeRect(centerX - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
+            }
+        }
+        
+        for (let i = 0; i < data.length; i += Math.max(1, Math.floor(data.length / 8))) {
+            const x = padding.left + (i * (candleWidth + candleSpacing * 2)) + candleSpacing + candleWidth / 2;
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '8px Inter, system-ui';
+            ctx.save();
+            ctx.translate(x, dimensions.height - padding.bottom + 12);
+            ctx.rotate(-0.3);
+            ctx.fillText(data[i].time, 0, 0);
+            ctx.restore();
         }
         
     }, [data, dimensions]);
 
     if (!data || data.length === 0) {
         return (
-            <div style={{ textAlign: 'center', padding: '100px', color: '#999' }}>
-                ⏳ Ожидание свечных данных...
+            <div style={{ textAlign: 'center', padding: '140px 20px', color: '#94a3b8', background: '#f8fafc', borderRadius: '12px' }}>
+                <div style={{ fontSize: '32px', marginBottom: '12px' }}>📊</div>
+                <div>Ожидание свечных данных...</div>
+                <div style={{ fontSize: '12px', marginTop: '8px' }}>Свечи формируются каждые несколько секунд</div>
             </div>
         );
     }
 
     return (
-        <div ref={chartRef} style={{ width: '100%', height: '350px', position: 'relative' }}>
-            <canvas
-                id="candle-canvas"
-                style={{ width: '100%', height: '100%', backgroundColor: '#fafafa', borderRadius: '8px' }}
-            />
+        <div ref={containerRef} style={{ width: '100%', height: '370px', background: '#f8fafc', borderRadius: '12px', padding: '10px' }}>
+            <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
         </div>
     );
-}
+});
 
-function CryptoCard({ symbol, price, change, history, candles, onRemove }: { 
+
+const CryptoCard = React.memo(({ 
+    symbol, price, change, history, candles, onRemove, timeframe, onTimeframeChange, isConnected 
+}: { 
     symbol: string; 
     price: number;
     change: number;
     history: ChartData[];
     candles: CandleData[];
     onRemove: () => void;
-}) {
+    timeframe: Timeframe;
+    onTimeframeChange: (tf: Timeframe) => void;
+    isConnected: boolean;
+}) => {
     const [showChart, setShowChart] = useState(false);
     const [chartType, setChartType] = useState<'line' | 'candle'>('candle');
 
@@ -205,9 +198,12 @@ function CryptoCard({ symbol, price, change, history, candles, onRemove }: {
         <div className="crypto-card">
             <div className="card-header">
                 <div className="crypto-info">
-                    <h3>{symbol}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3>{symbol}</h3>
+                        <span className={`status-dot ${isConnected ? 'connected' : 'connecting'}`} />
+                    </div>
                     <p className={`price ${change >= 0 ? 'positive' : 'negative'}`}>
-                        ${price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        ${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                     <p className={`change ${change >= 0 ? 'positive' : 'negative'}`}>
                         {change >= 0 ? '▲' : '▼'} {Math.abs(change).toFixed(2)}%
@@ -216,12 +212,24 @@ function CryptoCard({ symbol, price, change, history, candles, onRemove }: {
                 <button className="remove-btn" onClick={onRemove}>✕</button>
             </div>
             
+            <div className="timeframe-bar">
+                {(Object.entries(TIMEFRAME_CONFIG) as [Timeframe, { ms: number; label: string }][]).map(([key, config]) => (
+                    <button
+                        key={key}
+                        className={`tf-badge ${timeframe === key ? 'active' : ''}`}
+                        onClick={() => onTimeframeChange(key)}
+                    >
+                        {config.label}
+                    </button>
+                ))}
+            </div>
+            
             <button className="chart-toggle" onClick={() => setShowChart(!showChart)}>
                 {showChart ? '📉 Скрыть график' : '📈 Показать график'}
             </button>
             
             {showChart && (
-                <>
+                <div className="chart-area">
                     <div className="chart-type-buttons">
                         <button className={`type-btn ${chartType === 'line' ? 'active' : ''}`} onClick={() => setChartType('line')}>
                             📈 Линейный
@@ -231,35 +239,33 @@ function CryptoCard({ symbol, price, change, history, candles, onRemove }: {
                         </button>
                     </div>
                     
-                    <div className="chart-container">
-                        {chartType === 'line' && history.length > 0 && (
-                            <ResponsiveContainer width="100%" height={350}>
-                                <LineChart data={history}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-                                    <YAxis domain={['auto', 'auto']} />
-                                    <Tooltip />
-                                    <Line type="monotone" dataKey="price" stroke="#667eea" strokeWidth={2} dot={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        )}
-                        
-                        {chartType === 'candle' && (
-                            <CandlestickChart data={candles} />
-                        )}
-                    </div>
-                </>
+                    {chartType === 'line' && history.length > 0 && (
+                        <ResponsiveContainer width="100%" height={350}>
+                            <LineChart data={history}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#64748b' }} interval="preserveStartEnd" />
+                                <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#64748b' }} />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                />
+                                <Line type="monotone" dataKey="price" stroke="#6366f1" strokeWidth={2} dot={false} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    )}
+                    
+                    {chartType === 'candle' && <CandlestickChart data={candles} />}
+                </div>
             )}
         </div>
     );
-}
+});
 
-function HistoryLog({ history }: { history: HistoryItem[] }) {
+const HistoryLog = React.memo(({ history }: { history: HistoryItem[] }) => {
     const logRef = useRef<HTMLDivElement>(null);
     
     useEffect(() => {
         if (logRef.current) {
-            logRef.current.scrollTop = logRef.current.scrollHeight;
+            logRef.current.scrollTop = 0;
         }
     }, [history]);
 
@@ -268,12 +274,12 @@ function HistoryLog({ history }: { history: HistoryItem[] }) {
             <h3>📋 История цен</h3>
             <div className="history-list" ref={logRef}>
                 {history.length === 0 ? (
-                    <p>Ожидание данных...</p>
+                    <div className="history-empty">⏳ Ожидание данных...</div>
                 ) : (
-                    history.slice(0, 50).map((item, i) => (
-                        <div key={i} className="history-item">
+                    history.map((item, i) => (
+                        <div key={`${item.symbol}-${item.timestamp}-${i}`} className="history-item">
                             <span className="history-time">{item.time}</span>
-                            <span className="history-symbol">{item.symbol}</span>
+                            <span className={`history-symbol ${item.symbol.toLowerCase()}`}>{item.symbol}</span>
                             <span className="history-price">${item.price.toLocaleString()}</span>
                         </div>
                     ))
@@ -281,9 +287,10 @@ function HistoryLog({ history }: { history: HistoryItem[] }) {
             </div>
         </div>
     );
-}
+});
 
-function HistoryChart({ history }: { history: HistoryItem[] }) {
+
+const HistoryChart = React.memo(({ history }: { history: HistoryItem[] }) => {
     const [selected, setSelected] = useState<Set<string>>(new Set(['BTC', 'ETH']));
     const allSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'DOGE'];
 
@@ -330,200 +337,228 @@ function HistoryChart({ history }: { history: HistoryItem[] }) {
                     </button>
                 ))}
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="time" />
-                    <YAxis />
-                    <Tooltip />
-                    {allSymbols.map(s => selected.has(s) && (
-                        <Line 
-                            key={s} 
-                            type="monotone" 
-                            dataKey={s} 
-                            stroke={colors[s]} 
-                            strokeWidth={2} 
-                            dot={false} 
+            {history.length === 0 ? (
+                <div className="chart-placeholder">⏳ Ожидание данных...</div>
+            ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#64748b' }} interval="preserveStartEnd" />
+                        <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#64748b' }} />
+                        <Tooltip 
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                         />
-                    ))}
-                </LineChart>
-            </ResponsiveContainer>
+                        {allSymbols.map(s => selected.has(s) && (
+                            <Line 
+                                key={s} 
+                                type="monotone" 
+                                dataKey={s} 
+                                stroke={colors[s]} 
+                                strokeWidth={2} 
+                                dot={false} 
+                            />
+                        ))}
+                    </LineChart>
+                </ResponsiveContainer>
+            )}
         </div>
     );
-}
+});
 
-
-function useBinanceWebSocket() {
-    const [prices, setPrices] = useState<Map<string, PriceData>>(new Map());
-    const [history, setHistory] = useState<Map<string, ChartData[]>>(new Map());
-    const [candles, setCandles] = useState<Map<string, CandleData[]>>(new Map());
-    const [priceLog, setPriceLog] = useState<HistoryItem[]>([]);
-    const wsRef = useRef<WebSocket | null>(null);
-    const prevPrices = useRef<Map<string, number>>(new Map());
+function useCryptoData(symbol: string, initialTimeframe: Timeframe) {
+    const [price, setPrice] = useState(0);
+    const [change, setChange] = useState(0);
+    const [history, setHistory] = useState<ChartData[]>([]);
+    const [candles, setCandles] = useState<CandleData[]>([]);
+    const [isConnected, setIsConnected] = useState(false);
+    const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
     
-    const activeCandleRef = useRef<Map<string, CandleData>>(new Map());
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
+    const activeCandleRef = useRef<CandleData | null>(null);
+    const lastPriceRef = useRef(0);
+    const timeframeRef = useRef<Timeframe>(timeframe);
 
-    const closeAndCreateNewCandle = useCallback((symbol: string, currentPrice: number) => {
-        const activeCandle = activeCandleRef.current.get(symbol);
+    const resetCandles = useCallback(() => {
+        setCandles([]);
+        activeCandleRef.current = null;
+    }, []);
+
+    const createNewCandle = useCallback((currentPrice: number, timestamp: number, currentTimeframe: Timeframe) => {
+        const intervalMs = TIMEFRAME_CONFIG[currentTimeframe].ms;
+        const intervalKey = Math.floor(timestamp / intervalMs) * intervalMs;
         
-        if (activeCandle) {
+        const newCandle: CandleData = {
+            time: new Date(intervalKey).toLocaleTimeString(),
+            open: currentPrice,
+            high: currentPrice,
+            low: currentPrice,
+            close: currentPrice,
+            timestamp: intervalKey,
+            isClosed: false
+        };
+        
+        activeCandleRef.current = newCandle;
+        setCandles(prev => [...prev, newCandle].slice(-100));
+    }, []);
+
+    const closeCurrentCandle = useCallback((currentPrice: number) => {
+        if (activeCandleRef.current && !activeCandleRef.current.isClosed) {
             const closedCandle: CandleData = {
-                ...activeCandle,
+                ...activeCandleRef.current,
                 close: currentPrice,
                 isClosed: true
             };
             
             setCandles(prev => {
-                const newMap = new Map(prev);
-                const arr = newMap.get(symbol) || [];
-                const updatedArr = [...arr];
-                if (updatedArr.length > 0) {
-                    updatedArr[updatedArr.length - 1] = closedCandle;
+                const newCandles = [...prev];
+                if (newCandles.length > 0) {
+                    newCandles[newCandles.length - 1] = closedCandle;
                 }
-                newMap.set(symbol, updatedArr);
-                return newMap;
+                return newCandles;
             });
-        }
-        
-        const now = Date.now();
-        const newCandle: CandleData = {
-            time: new Date(now).toLocaleTimeString(),
-            open: currentPrice,
-            high: currentPrice,
-            low: currentPrice,
-            close: currentPrice,
-            timestamp: now,
-            isClosed: false
-        };
-        
-        activeCandleRef.current.set(symbol, newCandle);
-        
-        setCandles(prev => {
-            const newMap = new Map(prev);
-            const arr = newMap.get(symbol) || [];
-            newMap.set(symbol, [...arr, newCandle]);
-            return newMap;
-        });
-    }, []);
-
-    const updateActiveCandle = useCallback((symbol: string, price: number) => {
-        const activeCandle = activeCandleRef.current.get(symbol);
-        if (activeCandle && !activeCandle.isClosed) {
-            activeCandle.high = Math.max(activeCandle.high, price);
-            activeCandle.low = Math.min(activeCandle.low, price);
-            activeCandle.close = price;
-            
-            setCandles(prev => {
-                const newMap = new Map(prev);
-                const arr = newMap.get(symbol) || [];
-                if (arr.length > 0) {
-                    const updatedArr = [...arr];
-                    updatedArr[updatedArr.length - 1] = { ...activeCandle };
-                    newMap.set(symbol, updatedArr);
-                }
-                return newMap;
-            });
+            activeCandleRef.current = null;
         }
     }, []);
 
-    const initCandles = useCallback((symbol: string, price: number) => {
-        closeAndCreateNewCandle(symbol, price);
-    }, [closeAndCreateNewCandle]);
-
     useEffect(() => {
-        intervalRef.current = setInterval(() => {
-            const currentPrices = new Map<string, number>();
-            prevPrices.current.forEach((price, symbol) => {
-                currentPrices.set(symbol, price);
-            });
+        timeframeRef.current = timeframe;
+        
+        const interval = setInterval(() => {
+            if (lastPriceRef.current > 0 && activeCandleRef.current) {
+                closeCurrentCandle(lastPriceRef.current);
+                createNewCandle(lastPriceRef.current, Date.now(), timeframeRef.current);
+            }
+        }, TIMEFRAME_CONFIG[timeframe].ms);
+        
+        return () => clearInterval(interval);
+    }, [timeframe, closeCurrentCandle, createNewCandle]);
+
+    
+    useEffect(() => {
+        let mounted = true;
+        
+        const connect = () => {
+            const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${symbol.toLowerCase()}usdt@trade`);
+            wsRef.current = ws;
             
-            ['BTC', 'ETH', 'BNB', 'SOL', 'DOGE'].forEach(symbol => {
-                const currentPrice = currentPrices.get(symbol);
-                if (currentPrice && currentPrice > 0) {
-                    closeAndCreateNewCandle(symbol, currentPrice);
+            ws.onopen = () => {
+                if (mounted) {
+                    setIsConnected(true);
+                    resetCandles();
                 }
-            });
-        }, 10000);
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    const trade = data.data;
+                    if (!trade || trade.e !== 'trade') return;
+                    
+                    const newPrice = parseFloat(trade.p);
+                    const timestamp = trade.T;
+                    const timeStr = new Date(timestamp).toLocaleTimeString();
+                    
+                    lastPriceRef.current = newPrice;
+                    
+                    setPrice(prev => {
+                        const oldPrice = prev || newPrice;
+                        const newChange = ((newPrice - oldPrice) / oldPrice) * 100;
+                        setChange(newChange);
+                        return newPrice;
+                    });
+                    
+                    setHistory(prev => [...prev, { time: timeStr, price: newPrice, timestamp }].slice(-100));
+                    
+                    if (!activeCandleRef.current) {
+                        createNewCandle(newPrice, timestamp, timeframeRef.current);
+                    } else {
+                        const currentCandle = activeCandleRef.current;
+                        currentCandle.high = Math.max(currentCandle.high, newPrice);
+                        currentCandle.low = Math.min(currentCandle.low, newPrice);
+                        currentCandle.close = newPrice;
+                        
+                        setCandles(prev => {
+                            const newCandles = [...prev];
+                            if (newCandles.length > 0) {
+                                newCandles[newCandles.length - 1] = { ...currentCandle };
+                            }
+                            return newCandles;
+                        });
+                    }
+                } catch (err) {
+                    console.error('Ошибка:', err);
+                }
+            };
+            
+            ws.onerror = () => {
+                if (mounted) setIsConnected(false);
+            };
+            
+            ws.onclose = () => {
+                if (mounted) {
+                    setIsConnected(false);
+                    setTimeout(connect, 3000);
+                }
+            };
+        };
+        
+        connect();
         
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
+            mounted = false;
+            if (wsRef.current) wsRef.current.close();
         };
-    }, [closeAndCreateNewCandle]);
+    }, [symbol, createNewCandle, resetCandles]);
 
-    useEffect(() => {
-        const ws = new WebSocket(
-            'wss://stream.binance.com:9443/stream?streams=btcusdt@trade/ethusdt@trade/bnbusdt@trade/solusdt@trade/dogeusdt@trade'
-        );
-        wsRef.current = ws;
-        let isFirstMessage = true;
-
-        ws.onopen = () => {
-            console.log('✅ WebSocket Connected');
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                const trade = data.data;
-                if (!trade || trade.e !== 'trade') return;
-                
-                let symbol = '';
-                if (trade.s === 'BTCUSDT') symbol = 'BTC';
-                else if (trade.s === 'ETHUSDT') symbol = 'ETH';
-                else if (trade.s === 'BNBUSDT') symbol = 'BNB';
-                else if (trade.s === 'SOLUSDT') symbol = 'SOL';
-                else if (trade.s === 'DOGEUSDT') symbol = 'DOGE';
-                else return;
-                
-                const price = parseFloat(trade.p);
-                const timestamp = trade.T;
-                const timeStr = new Date(timestamp).toLocaleTimeString();
-                
-                setPriceLog(prev => [{ symbol, price, time: timeStr, timestamp }, ...prev].slice(0, 100));
-                
-                const oldPrice = prevPrices.current.get(symbol) || price;
-                const change = ((price - oldPrice) / oldPrice) * 100;
-                setPrices(prev => new Map(prev).set(symbol, { price, change }));
-                prevPrices.current.set(symbol, price);
-                
-                setHistory(prev => {
-                    const newMap = new Map(prev);
-                    const arr = newMap.get(symbol) || [];
-                    newMap.set(symbol, [...arr, { time: timeStr, price, timestamp }].slice(-50));
-                    return newMap;
-                });
-                
-                if (isFirstMessage) {
-                    isFirstMessage = false;
-                    initCandles(symbol, price);
-                } else {
-                    updateActiveCandle(symbol, price);
+    const changeTimeframe = useCallback((newTimeframe: Timeframe) => {
+        if (lastPriceRef.current > 0) {
+            closeCurrentCandle(lastPriceRef.current);
+            setTimeframe(newTimeframe);
+            setTimeout(() => {
+                if (lastPriceRef.current > 0) {
+                    createNewCandle(lastPriceRef.current, Date.now(), newTimeframe);
                 }
-            } catch (err) {
-                console.error('Ошибка:', err);
-            }
-        };
-        
-        ws.onerror = () => {
-            toast.error('Ошибка подключения');
-        };
-        
-        return () => {
-            if (wsRef.current) {
-                wsRef.current.close();
-            }
-        };
-    }, [initCandles, updateActiveCandle]);
+            }, 10);
+        } else {
+            setTimeframe(newTimeframe);
+        }
+    }, [closeCurrentCandle, createNewCandle]);
 
-    return { prices, history, candles, priceLog };
+    return { price, change, history, candles, isConnected, timeframe, changeTimeframe };
 }
 
 function App() {
     const [selected, setSelected] = useState<string[]>(['BTC', 'ETH', 'BNB']);
-    const { prices, history, candles, priceLog } = useBinanceWebSocket();
+    
+    const btc = useCryptoData('BTC', '10s');
+    const eth = useCryptoData('ETH', '10s');
+    const bnb = useCryptoData('BNB', '10s');
+    const sol = useCryptoData('SOL', '10s');
+    const doge = useCryptoData('DOGE', '10s');
+    
+    const allData = { BTC: btc, ETH: eth, BNB: bnb, SOL: sol, DOGE: doge };
+    
+    const [globalHistory, setGlobalHistory] = useState<HistoryItem[]>([]);
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const items: HistoryItem[] = [];
+            (Object.entries(allData) as [string, typeof btc][]).forEach(([sym, data]) => {
+                if (data.history.length > 0) {
+                    const lastItem = data.history[data.history.length - 1];
+                    items.push({
+                        symbol: sym,
+                        price: lastItem.price,
+                        time: lastItem.time,
+                        timestamp: lastItem.timestamp
+                    });
+                }
+            });
+            setGlobalHistory(items.sort((a, b) => b.timestamp - a.timestamp).slice(0, 50));
+        }, 500);
+        return () => clearInterval(interval);
+    }, [allData]);
+
     const cryptos = [
         { symbol: 'BTC', name: 'Bitcoin' },
         { symbol: 'ETH', name: 'Ethereum' },
@@ -536,6 +571,8 @@ function App() {
         if (!selected.includes(symbol)) {
             setSelected([...selected, symbol]);
             toast.success(`${symbol} добавлен`);
+        } else {
+            toast.error(`${symbol} уже в списке`);
         }
     };
 
@@ -546,51 +583,53 @@ function App() {
 
     return (
         <div className="app">
-            <Toaster position="top-right" />
+            <Toaster position="top-right" toastOptions={{ duration: 2000 }} />
             <div className="container">
                 <header>
                     <h1>🚀 Crypto Live Tracker</h1>
                 </header>
                 
                 <div className="add-crypto">
-                    <select 
-                        onChange={(e) => { 
-                            if (e.target.value) {
-                                addCrypto(e.target.value);
-                                e.target.value = '';
-                            }
-                        }}
-                        defaultValue="">
-                    
+                    <select onChange={(e) => { if (e.target.value) addCrypto(e.target.value); e.target.value = ''; }} defaultValue="">
                         <option value="" disabled>➕ Добавить криптовалюту</option>
                         {cryptos.filter(c => !selected.includes(c.symbol)).map(c => (
-                            <option key={c.symbol} value={c.symbol}>
-                                {c.name} ({c.symbol})
-                            </option>
+                            <option key={c.symbol} value={c.symbol}>{c.name} ({c.symbol})</option>
                         ))}
                     </select>
                 </div>
                 
                 <div className="crypto-grid">
                     {selected.map(symbol => {
-                        const data = prices.get(symbol);
+                        const data = allData[symbol as keyof typeof allData];
+                        if (!data) return null;
                         return (
                             <CryptoCard
                                 key={symbol}
                                 symbol={symbol}
-                                price={data?.price || 0}
-                                change={data?.change || 0}
-                                history={history.get(symbol) || []}
-                                candles={candles.get(symbol) || []}
+                                price={data.price}
+                                change={data.change}
+                                history={data.history}
+                                candles={data.candles}
                                 onRemove={() => removeCrypto(symbol)}
+                                timeframe={data.timeframe}
+                                onTimeframeChange={data.changeTimeframe}
+                                isConnected={data.isConnected}
                             />
                         );
                     })}
                 </div>
                 
+                {selected.length === 0 && (
+                    <div className="empty-state">
+                        <div className="empty-icon">📭</div>
+                        <p>Нет отслеживаемых криптовалют</p>
+                        <p className="empty-hint">Добавьте первую монету из списка выше</p>
+                    </div>
+                )}
+                
                 <div className="sidebar">
-                    <HistoryLog history={priceLog} />
-                    <HistoryChart history={priceLog} />
+                    <HistoryLog history={globalHistory} />
+                    <HistoryChart history={globalHistory} />
                 </div>
             </div>
         </div>
