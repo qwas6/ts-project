@@ -1,0 +1,174 @@
+.crypto-card {
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.crypto-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.crypto-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.crypto-title h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+
+.price {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.price.positive { color: #22c55e; }
+.price.negative { color: #ef4444; }
+
+.change {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.change.positive { color: #22c55e; }
+.change.negative { color: #ef4444; }
+
+.remove-btn {
+    width: 34px;
+    height: 34px;
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.02);
+}
+
+.timeframe-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.tf-badge {
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: #475569;
+}
+
+.tf-badge:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.tf-badge.active {
+    background: #6366f1;
+    color: white;
+}
+
+.chart-toggle {
+    width: 100%;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+    color: #475569;
+}
+
+.chart-toggle:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.chart-area {
+    margin-top: 8px;
+}
+
+.chart-type-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 8px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: #475569;
+}
+
+.type-btn.active {
+    background: #6366f1;
+    color: white;
+}
+
+.type-btn:hover:not(.active) {
+    background: #e2e8f0;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.connected {
+    background: #22c55e;
+    box-shadow: 0 0 6px #22c55e;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.connecting {
+    background: #f59e0b;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0.5; transform: scale(0.8); }
+}

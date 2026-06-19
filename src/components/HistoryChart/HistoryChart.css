@@ -1,0 +1,48 @@
+.history-chart {
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+}
+
+.history-chart h3 {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #6366f1;
+    color: #1e293b;
+    font-size: 1.2rem;
+}
+
+.symbol-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.sym-btn {
+    padding: 6px 14px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: #475569;
+}
+
+.sym-btn.active {
+    background: #6366f1;
+    color: white;
+}
+
+.sym-btn:hover:not(.active) {
+    background: #e2e8f0;
+}
+
+.chart-placeholder {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
