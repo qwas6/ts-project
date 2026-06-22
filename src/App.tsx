@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { CryptoCard } from './components/CryptoCard/CryptoCard';
-import { HistoryLog } from './components/HistoryLog/HistoryLog';
-import { HistoryChart } from './components/HistoryChart/HistoryChart';
-import { useCryptoData } from './hooks/useCryptoData';
-import { useGlobalHistory } from './hooks/useGlobalHistory';
+import { CryptoCard, HistoryLog, HistoryChart, CandlestickChart } from './components';
+import { useCryptoData, useGlobalHistory } from './hooks';
 import { CRYPTOS } from './constants';
 import './App.css';
 
