@@ -4,6 +4,9 @@
     padding: 20px;
     box-shadow: 0 10px 35px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
+    min-height: 700px;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .crypto-card:hover {
@@ -69,6 +72,7 @@
     transform: scale(1.02);
 }
 
+
 .timeframe-bar {
     display: flex;
     gap: 8px;
@@ -117,24 +121,53 @@
     border-color: #cbd5e1;
 }
 
-.chart-area {
-    margin-top: 8px;
+
+.chart-order-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chart-order-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+}
+
+
+.chart-wrapper {
+    flex: 2.5;
+    min-width: 0;
+    max-width: 75%;
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 14px;
+}
+
+.chart-wrapper .recharts-wrapper {
+    width: 100% !important;
+    height: 400px !important;
+}
+
+.chart-wrapper .recharts-surface {
+    width: 100% !important;
+    height: 400px !important;
 }
 
 .chart-type-buttons {
     display: flex;
     gap: 10px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .type-btn {
-    flex: 1;
-    padding: 8px;
+    padding: 6px 14px;
     background: #f1f5f9;
     border: none;
-    border-radius: 12px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 11px;
     font-weight: 500;
     transition: all 0.2s;
     color: #475569;
@@ -149,6 +182,77 @@
     background: #e2e8f0;
 }
 
+.right-panel-new {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 220px;
+    max-width: 320px;
+    flex-shrink: 0;
+}
+
+
+.orderbook-wrapper-new {
+    flex: 1;
+    min-height: 180px;
+    max-height: 44%;
+}
+
+.orderbook-wrapper-new .order-book {
+    height: 100%;
+    padding: 10px 12px;
+}
+
+.orderbook-wrapper-new .order-book-row {
+    height: 18px;
+    line-height: 14px;
+    font-size: 11px;
+}
+
+.orderbook-wrapper-new .order-book-row .price,
+.orderbook-wrapper-new .order-book-row .quantity,
+.orderbook-wrapper-new .order-book-row .total {
+    font-size: 11px;
+}
+
+.orderbook-wrapper-new .order-book-asks {
+    max-height: 100px;
+}
+
+.orderbook-wrapper-new .order-book-bids {
+    max-height: 100px;
+}
+
+.trade-wrapper-new {
+    flex: 1;
+    min-height: 180px;
+    max-height: 56%;
+}
+
+.trade-wrapper-new .trade-panel {
+    padding: 12px;
+    height: 100%;
+}
+
+.trade-wrapper-new .trade-fields {
+    gap: 4px;
+}
+
+.trade-wrapper-new .trade-field input {
+    padding: 5px 8px;
+    font-size: 12px;
+}
+
+.trade-wrapper-new .total-value {
+    font-size: 13px;
+}
+
+.trade-wrapper-new .trade-action-btn {
+    padding: 8px;
+    font-size: 12px;
+}
+
 .status-dot {
     width: 8px;
     height: 8px;
@@ -158,7 +262,7 @@
 
 .status-dot.connected {
     background: #22c55e;
-    box-shadow: 0 0 6px #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
     animation: pulse 2s infinite;
 }
 
@@ -171,4 +275,105 @@
     0% { opacity: 0.5; transform: scale(0.8); }
     50% { opacity: 1; transform: scale(1.2); }
     100% { opacity: 0.5; transform: scale(0.8); }
+}
+
+
+@media (max-width: 1200px) {
+    .right-panel-new {
+        min-width: 200px;
+        max-width: 280px;
+    }
+    
+    .chart-wrapper .recharts-wrapper {
+        height: 350px !important;
+    }
+    
+    .chart-wrapper .recharts-surface {
+        height: 350px !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    .chart-order-row {
+        flex-direction: column;
+    }
+    
+    .chart-wrapper {
+        max-width: 100%;
+    }
+    
+    .right-panel-new {
+        max-width: none;
+        min-width: unset;
+        flex-direction: row;
+    }
+    
+    .chart-wrapper .recharts-wrapper {
+        height: 320px !important;
+    }
+    
+    .chart-wrapper .recharts-surface {
+        height: 320px !important;
+    }
+    
+    .orderbook-wrapper-new {
+        flex: 1;
+        min-height: 160px;
+        max-height: 220px;
+    }
+    
+    .trade-wrapper-new {
+        flex: 1;
+        min-height: 160px;
+        max-height: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    .crypto-card {
+        padding: 14px;
+        min-height: 600px;
+    }
+    
+    .price {
+        font-size: 1.4rem;
+    }
+    
+    .crypto-title h3 {
+        font-size: 1.3rem;
+    }
+    
+    .right-panel-new {
+        flex-direction: column;
+    }
+    
+    .chart-wrapper .recharts-wrapper {
+        height: 280px !important;
+    }
+    
+    .chart-wrapper .recharts-surface {
+        height: 280px !important;
+    }
+    
+    .orderbook-wrapper-new {
+        min-height: 140px;
+        max-height: 180px;
+    }
+    
+    .trade-wrapper-new {
+        min-height: 160px;
+        max-height: 220px;
+    }
+    
+    .orderbook-wrapper-new .order-book-row {
+        height: 16px;
+        line-height: 12px;
+        font-size: 10px;
+    }
+    
+    .orderbook-wrapper-new .order-book-row .price,
+    .orderbook-wrapper-new .order-book-row .quantity,
+    .orderbook-wrapper-new .order-book-row .total {
+        font-size: 10px;
+    }
 }

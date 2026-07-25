@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { CryptoCard, HistoryLog, HistoryChart, CandlestickChart } from './components';
-import { useCryptoData, useGlobalHistory } from './hooks';
+import { Rocket, Plus, BarChart3, Clock } from 'lucide-react';
+import { CryptoCard } from './components/CryptoCard/CryptoCard';
+import { HistoryLog } from './components/HistoryLog/HistoryLog';
+import { HistoryChart } from './components/HistoryChart/HistoryChart';
+import { useCryptoData } from './hooks/useCryptoData';
+import { useGlobalHistory } from './hooks/useGlobalHistory';
 import { CRYPTOS } from './constants';
 import './App.css';
 
@@ -36,14 +40,30 @@ function App() {
             <Toaster position="top-right" toastOptions={{ duration: 2000 }} />
             <div className="container">
                 <header>
-                    <h1>🚀 Crypto Live Tracker</h1>
+                    <h1>
+                        <Rocket size={28} />
+                        Crypto Live Tracker
+                    </h1>
+                
                 </header>
                 
                 <div className="add-crypto">
-                    <select onChange={(e) => { if (e.target.value) addCrypto(e.target.value); e.target.value = ''; }} defaultValue="">
-                        <option value="" disabled>➕ Добавить криптовалюту</option>
+                    <select 
+                        onChange={(e) => { 
+                            if (e.target.value) {
+                                addCrypto(e.target.value);
+                                e.target.value = '';
+                            }
+                        }} 
+                        defaultValue=""
+                    >
+                        <option value="" disabled>
+                            <Plus size={14} /> Добавить криптовалюту
+                        </option>
                         {CRYPTOS.filter(c => !selected.includes(c.symbol)).map(c => (
-                            <option key={c.symbol} value={c.symbol}>{c.name} ({c.symbol})</option>
+                            <option key={c.symbol} value={c.symbol}>
+                                {c.name} ({c.symbol})
+                            </option>
                         ))}
                     </select>
                 </div>
