@@ -16,7 +16,7 @@ interface OrderBookData {
 
 interface OrderBookProps {
     symbol: string;
-}
+} 
 
 export const OrderBook: React.FC<OrderBookProps> = ({ symbol }) => {
     const [orderBook, setOrderBook] = useState<OrderBookData>({ bids: [], asks: [], lastUpdateId: 0 });

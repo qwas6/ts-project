@@ -7,7 +7,7 @@ interface CryptoAsset {
     symbol: string;
     quantity: number;
     averagePrice: number;
-}
+} 
 
 interface CryptoWalletProps {
     walletBalance: number;

@@ -3,8 +3,8 @@ import type { CandleData } from '../../types';
 import './CandlestickChart.css';
 
 interface CandlestickChartProps {
-    data: CandleData[];
-}
+    data: CandleData[ ];
+} 
 
 export const CandlestickChart = React.memo(({ data }: CandlestickChartProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);

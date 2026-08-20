@@ -8,7 +8,7 @@ interface WalletData {
     transactions: Transaction[];
 }
 
-interface Transaction {
+interface Transaction { 
     id: string;
     type: 'deposit' | 'buy' | 'sell';
     amount: number;

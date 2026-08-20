@@ -160,7 +160,7 @@
 .asset-change.negative {
     color: #ef4444;
 }
-
+ 
 .asset-profit {
     display: flex;
     flex-direction: column;

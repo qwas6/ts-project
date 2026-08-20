@@ -30,4 +30,4 @@ export const HistoryLog = React.memo(({ history }: { history: HistoryItem[] }) =
             </div>
         </div>
     );
-});
+}); 

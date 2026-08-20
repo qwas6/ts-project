@@ -10,7 +10,7 @@
     overflow: hidden;
 }
 
-.open-orders-header {
+.open-orders-header { 
     display: flex;
     justify-content: space-between;
     align-items: center;

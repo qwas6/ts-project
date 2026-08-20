@@ -252,7 +252,7 @@ export const CryptoCard = React.memo(({
                                         <div className="history-full-list">
                                             {(() => {
                                                 const saved = localStorage.getItem('tradeHistory');
-                                                if (!saved) return <div className="history-empty">Нет ордеров</div>;
+                                                if (!saved) return <div className ="history-empty">Нет ордеров</div>;
                                                 try {
                                                     const orders = JSON.parse(saved);
                                                     if (orders.length === 0) return <div className="history-empty">Нет ордеров</div>;

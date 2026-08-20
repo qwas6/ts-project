@@ -7,7 +7,7 @@ import {
     Target, Sparkles
 } from 'lucide-react';
 import './TradePanel.css';
-
+ 
 interface Order {
     id: string;
     symbol: string;

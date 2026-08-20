@@ -11,7 +11,7 @@ export const HistoryChart = React.memo(({ history }: { history: HistoryItem[] })
         const map = new Map<string, any>();
         history.forEach(item => {
             if (!selected.has(item.symbol)) return;
-            if (!map.has(item.time)) {
+            if (!map.has(item.time)) { 
                 map.set(item.time, { time: item.time });
             }
             const entry = map.get(item.time);
