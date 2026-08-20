@@ -8,9 +8,6 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     padding: 20px;
 }
 
@@ -22,25 +19,32 @@ body {
 
 .app {
     width: 100%;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
 }
 
 .container {
     width: 100%;
-    display: flex;
-    flex-direction: column;
 }
 
 
 header {
-    text-align: center;
     margin-bottom: 20px;
-    flex-shrink: 0;
 }
 
-header h1 {
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+
+.header-left {
+    flex: 1;
+    text-align: center;
+}
+
+.header-left h1 {
     color: white;
     font-size: 2rem;
     font-weight: 700;
@@ -52,7 +56,7 @@ header h1 {
     gap: 10px;
 }
 
-header p {
+.header-left p {
     color: rgba(255,255,255,0.85);
     font-size: 0.9rem;
     display: flex;
@@ -62,10 +66,71 @@ header p {
 }
 
 
+.header-right {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.wallet-header {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    min-width: 200px;
+}
+
+.wallet-label {
+    font-size: 13px;
+    opacity: 0.8;
+    font-weight: 500;
+}
+
+.wallet-amount {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.wallet-actions-header {
+    display: flex;
+    gap: 4px;
+    margin-left: 4px;
+}
+
+.wallet-btn-small {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wallet-btn-small:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.deposit-btn-header {
+    background: rgba(34, 197, 94, 0.35);
+}
+
+.deposit-btn-header:hover {
+    background: rgba(34, 197, 94, 0.55);
+}
+
+
 .add-crypto {
     text-align: center;
     margin-bottom: 16px;
-    flex-shrink: 0;
 }
 
 .add-crypto select {
@@ -90,11 +155,7 @@ header p {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
-    flex: 1;
-}
-
-.crypto-grid > * {
-    min-height: 0;
+    margin-bottom: 16px;
 }
 
 
@@ -102,7 +163,6 @@ header p {
     display: flex;
     gap: 16px;
     margin-top: 16px;
-    flex-shrink: 0;
     min-height: 200px;
 }
 
@@ -117,11 +177,6 @@ header p {
     background: white;
     border-radius: 24px;
     margin: 20px 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
 }
 
 .empty-icon {
@@ -141,27 +196,208 @@ header p {
 }
 
 
-@media (max-width: 1000px) {
-    .app {
-        padding: 12px;
-    }
-    
-    .sidebar {
-        flex-direction: column;
-        min-height: 300px;
-    }
+.deposit-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
 }
 
+.deposit-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.deposit-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.deposit-modal-header h4 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a2332;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-close-btn {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #475569;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-btn:hover {
+    background: #e2e8f0;
+}
+
+.deposit-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.deposit-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.deposit-presets button {
+    flex: 0 1 auto;
+    padding: 8px 12px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    transition: all 0.2s;
+    text-align: center;
+    min-width: 60px;
+}
+
+.deposit-presets button:hover {
+    background: #e2e8f0;
+    border-color: #6366f1;
+    color: #6366f1;
+    transform: translateY(-1px);
+}
+
+.deposit-custom {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.deposit-custom label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8a9bb5;
+}
+
+.deposit-custom-input {
+    display: flex;
+    gap: 8px;
+}
+
+.deposit-custom-input input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Monaco', 'Menlo', monospace;
+    transition: all 0.2s;
+    min-width: 0;
+}
+
+.deposit-custom-input input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.deposit-custom-btn {
+    padding: 8px 16px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.deposit-custom-btn:hover {
+    background: #4f46e5;
+    transform: translateY(-1px);
+}
+
+.deposit-current-balance {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    padding: 8px;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.deposit-current-balance strong {
+    color: #1a2332;
+}
+
+
 @media (max-width: 768px) {
-    .app {
-        padding: 8px;
+    .header-content {
+        flex-direction: column;
+        align-items: center;
     }
     
-    header h1 {
+    .header-left h1 {
         font-size: 1.5rem;
     }
     
+    .header-right {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .wallet-header {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .deposit-modal {
+        margin: 16px;
+        padding: 20px;
+    }
+    
+    .deposit-presets button {
+        font-size: 12px;
+        padding: 6px 10px;
+        min-width: 50px;
+    }
+}
+
+@media (max-width: 1000px) {
     .sidebar {
-        min-height: 250px;
+        flex-direction: column;
+        min-height: 300px;
     }
 }

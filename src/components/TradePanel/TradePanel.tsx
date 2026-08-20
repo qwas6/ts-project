@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NumericFormat } from 'react-number-format';
+import { toast } from 'react-hot-toast';
 import { 
-    TrendingUp, TrendingDown, 
     Wallet, History, Trash2,
     ShoppingBag, ShoppingCart,
     Target, Sparkles
@@ -23,11 +23,21 @@ interface Order {
 interface TradePanelProps {
     symbol: string;
     currentPrice: number;
+    walletBalance?: number;
+    onBuy?: (symbol: string, quantity: number, price: number) => boolean;
+    onSell?: (symbol: string, quantity: number, price: number) => boolean;
+    onLimitOrder?: (side: 'buy' | 'sell', price: number, quantity: number) => void;
 }
 
-export const TradePanel: React.FC<TradePanelProps> = ({ symbol, currentPrice }) => {
+export const TradePanel: React.FC<TradePanelProps> = ({ 
+    symbol, 
+    currentPrice,
+    walletBalance = 0,
+    onBuy,
+    onSell,
+    onLimitOrder
+}) => {
     const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
-    const [side, setSide] = useState<'buy' | 'sell'>('buy');
     const [quantity, setQuantity] = useState<string>('');
     const [price, setPrice] = useState<string>('');
     const [total, setTotal] = useState<number>(0);
@@ -63,30 +73,51 @@ export const TradePanel: React.FC<TradePanelProps> = ({ symbol, currentPrice }) 
         return new Date(timestamp).toLocaleString();
     };
 
-    const createOrder = () => {
+    const handleBuy = () => {
         const qty = parseFloat(quantity);
         if (!qty || qty <= 0) {
-            alert('Введите корректное количество');
+            toast.error('Введите корректное количество');
             return;
         }
 
         if (orderType === 'limit') {
             const p = parseFloat(price);
             if (!p || p <= 0) {
-                alert('Введите корректную цену');
+                toast.error('Введите корректную цену');
+                return;
+            }
+          
+            if (onLimitOrder) {
+                onLimitOrder('buy', p, qty);
+                setQuantity('');
+                setPrice('');
+                setTotal(0);
                 return;
             }
         }
 
-        const orderPrice = orderType === 'market' ? currentPrice : parseFloat(price);
+        
+        const orderPrice = currentPrice;
+        const totalCost = qty * orderPrice;
+
+        if (totalCost > walletBalance) {
+            toast.error(`Недостаточно средств! Нужно: $${totalCost.toFixed(2)}, Доступно: $${walletBalance.toFixed(2)}`);
+            return;
+        }
+
+        if (onBuy) {
+            const success = onBuy(symbol, qty, orderPrice);
+            if (!success) return;
+        }
+
         const newOrder: Order = {
             id: Date.now().toString(),
             symbol,
-            type: orderType,
-            side,
+            type: 'market',
+            side: 'buy',
             price: orderPrice,
             quantity: qty,
-            total: qty * orderPrice,
+            total: totalCost,
             timestamp: Date.now(),
             status: 'filled'
         };
@@ -99,13 +130,73 @@ export const TradePanel: React.FC<TradePanelProps> = ({ symbol, currentPrice }) 
         setPrice('');
         setTotal(0);
 
-        alert(`${side === 'buy' ? 'Покупка' : 'Продажа'} ${qty} ${symbol} выполнена!`);
+        toast.success(`Куплено ${qty} ${symbol} за $${totalCost.toFixed(2)}!`);
+    };
+
+    const handleSell = () => {
+        const qty = parseFloat(quantity);
+        if (!qty || qty <= 0) {
+            toast.error('Введите корректное количество');
+            return;
+        }
+
+        if (orderType === 'limit') {
+            const p = parseFloat(price);
+            if (!p || p <= 0) {
+                toast.error('Введите корректную цену');
+                return;
+            }
+           
+            if (onLimitOrder) {
+                onLimitOrder('sell', p, qty);
+                setQuantity('');
+                setPrice('');
+                setTotal(0);
+                return;
+            }
+        }
+
+      
+        const orderPrice = currentPrice;
+        const totalCost = qty * orderPrice;
+
+        if (onSell) {
+            const success = onSell(symbol, qty, orderPrice);
+            if (!success) return;
+        }
+
+        const newOrder: Order = {
+            id: Date.now().toString(),
+            symbol,
+            type: 'market',
+            side: 'sell',
+            price: orderPrice,
+            quantity: qty,
+            total: totalCost,
+            timestamp: Date.now(),
+            status: 'filled'
+        };
+
+        const updatedOrders = [newOrder, ...orders];
+        setOrders(updatedOrders);
+        localStorage.setItem('tradeHistory', JSON.stringify(updatedOrders));
+
+        setQuantity('');
+        setPrice('');
+        setTotal(0);
+
+        toast.success(`Продано ${qty} ${symbol} за $${totalCost.toFixed(2)}!`);
     };
 
     const clearHistory = () => {
-        if (confirm('Очистить историю ордеров?')) {
+        if (orders.length === 0) {
+            toast.error('История пуста');
+            return;
+        }
+        if (window.confirm('Очистить историю ордеров?')) {
             setOrders([]);
             localStorage.removeItem('tradeHistory');
+            toast.success('История очищена');
         }
     };
 
@@ -120,19 +211,9 @@ export const TradePanel: React.FC<TradePanelProps> = ({ symbol, currentPrice }) 
                 </span>
             </div>
 
-            <div className="trade-side-buttons">
-                <button
-                    className={`side-btn buy ${side === 'buy' ? 'active' : ''}`}
-                    onClick={() => setSide('buy')}
-                >
-                    <TrendingUp size={14} /> Покупка
-                </button>
-                <button
-                    className={`side-btn sell ${side === 'sell' ? 'active' : ''}`}
-                    onClick={() => setSide('sell')}
-                >
-                    <TrendingDown size={14} /> Продажа
-                </button>
+            <div className="trade-balance">
+                <span>Доступно: </span>
+                <strong>${formatPrice(walletBalance)}</strong>
             </div>
 
             <div className="trade-type-buttons">
@@ -201,16 +282,21 @@ export const TradePanel: React.FC<TradePanelProps> = ({ symbol, currentPrice }) 
                 </div>
             </div>
 
-            <button
-                className={`trade-action-btn ${side}`}
-                onClick={createOrder}
-            >
-                {side === 'buy' ? (
-                    <><ShoppingCart size={16} /> Купить {symbol}</>
-                ) : (
-                    <><ShoppingBag size={16} /> Продать {symbol}</>
-                )}
-            </button>
+            <div className="trade-buttons-row">
+                <button
+                    className="trade-action-btn buy"
+                    onClick={handleBuy}
+                    disabled={orderType === 'market' && total > walletBalance}
+                >
+                    <ShoppingCart size={14} /> Купить
+                </button>
+                <button
+                    className="trade-action-btn sell"
+                    onClick={handleSell}
+                >
+                    <ShoppingBag size={14} /> Продать
+                </button>
+            </div>
 
             <button
                 className="history-toggle-btn"

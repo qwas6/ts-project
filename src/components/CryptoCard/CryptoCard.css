@@ -1,12 +1,12 @@
+/* ===== КАРТОЧКА ===== */
 .crypto-card {
     background: white;
     border-radius: 24px;
     padding: 20px;
     box-shadow: 0 10px 35px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
-    min-height: 700px;
-    max-width: 100%;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .crypto-card:hover {
@@ -14,11 +14,13 @@
     box-shadow: 0 20px 45px rgba(0,0,0,0.15);
 }
 
+/* ===== ХЕДЕР ===== */
 .card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 16px;
+    flex-shrink: 0;
 }
 
 .crypto-title {
@@ -46,6 +48,9 @@
 .change {
     font-size: 0.85rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .change.positive { color: #22c55e; }
@@ -72,11 +77,12 @@
     transform: scale(1.02);
 }
 
-
+/* ===== ТАЙМФРЕЙМЫ ===== */
 .timeframe-bar {
     display: flex;
     gap: 8px;
     margin-bottom: 16px;
+    flex-shrink: 0;
     flex-wrap: wrap;
 }
 
@@ -102,6 +108,7 @@
     color: white;
 }
 
+/* ===== КНОПКА ПОКАЗА ГРАФИКА ===== */
 .chart-toggle {
     width: 100%;
     padding: 10px;
@@ -114,6 +121,11 @@
     transition: all 0.2s;
     margin-bottom: 16px;
     color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .chart-toggle:hover {
@@ -121,21 +133,19 @@
     border-color: #cbd5e1;
 }
 
-
+/* ===== ОСНОВНОЙ КОНТЕНТ ===== */
 .chart-order-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .chart-order-row {
     display: flex;
     gap: 16px;
-    width: 100%;
-    max-width: 100%;
 }
 
-
+/* ===== ГРАФИК ===== */
 .chart-wrapper {
     flex: 2.5;
     min-width: 0;
@@ -143,22 +153,28 @@
     background: #f8fafc;
     border-radius: 16px;
     padding: 14px;
+    display: flex;
+    flex-direction: column;
 }
 
-.chart-wrapper .recharts-wrapper {
-    width: 100% !important;
-    height: 400px !important;
+.chart-area-full {
+    flex: 1;
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.chart-wrapper .recharts-surface {
+.chart-area-full svg {
     width: 100% !important;
-    height: 400px !important;
+    height: 100% !important;
 }
 
 .chart-type-buttons {
     display: flex;
     gap: 10px;
     margin-bottom: 12px;
+    flex-shrink: 0;
 }
 
 .type-btn {
@@ -171,6 +187,9 @@
     font-weight: 500;
     transition: all 0.2s;
     color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .type-btn.active {
@@ -182,6 +201,7 @@
     background: #e2e8f0;
 }
 
+/* ===== ПРАВАЯ ПАНЕЛЬ ===== */
 .right-panel-new {
     flex: 1;
     display: flex;
@@ -192,11 +212,11 @@
     flex-shrink: 0;
 }
 
-
+/* ===== СТАКАН ===== */
 .orderbook-wrapper-new {
     flex: 1;
-    min-height: 180px;
-    max-height: 44%;
+    min-height: 0;
+    max-height: 45%;
 }
 
 .orderbook-wrapper-new .order-book {
@@ -204,30 +224,11 @@
     padding: 10px 12px;
 }
 
-.orderbook-wrapper-new .order-book-row {
-    height: 18px;
-    line-height: 14px;
-    font-size: 11px;
-}
-
-.orderbook-wrapper-new .order-book-row .price,
-.orderbook-wrapper-new .order-book-row .quantity,
-.orderbook-wrapper-new .order-book-row .total {
-    font-size: 11px;
-}
-
-.orderbook-wrapper-new .order-book-asks {
-    max-height: 100px;
-}
-
-.orderbook-wrapper-new .order-book-bids {
-    max-height: 100px;
-}
-
+/* ===== ТОРГОВЛЯ ===== */
 .trade-wrapper-new {
     flex: 1;
-    min-height: 180px;
-    max-height: 56%;
+    min-height: 0;
+    max-height: 55%;
 }
 
 .trade-wrapper-new .trade-panel {
@@ -235,24 +236,176 @@
     height: 100%;
 }
 
-.trade-wrapper-new .trade-fields {
+/* ===== ВКЛАДКИ СНИЗУ ===== */
+.bottom-tabs {
+    margin-top: 8px;
+    border-top: 1px solid #e8edf5;
+    padding-top: 8px;
+}
+
+.tabs-header {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 6px 8px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 4px;
 }
 
-.trade-wrapper-new .trade-field input {
-    padding: 5px 8px;
-    font-size: 12px;
+.tab-btn:hover {
+    background: #e2e8f0;
 }
 
-.trade-wrapper-new .total-value {
-    font-size: 13px;
+.tab-btn.active {
+    background: #6366f1;
+    color: white;
 }
 
-.trade-wrapper-new .trade-action-btn {
+.tabs-content {
+    min-height: 120px;
+}
+
+.tab-panel {
+    height: 100%;
+}
+
+.tab-panel .crypto-wallet {
+    padding: 8px 10px;
+    border: 1px solid #e8edf5;
+    border-radius: 8px;
+}
+
+/* ===== ИСТОРИЯ ===== */
+.history-panel {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.history-full {
     padding: 8px;
-    font-size: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
 }
 
+.history-full-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.history-full-header span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a2332;
+}
+
+.history-full-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.history-full-list .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: white;
+    font-size: 11px;
+}
+
+.history-full-list .history-item.buy {
+    border-left: 3px solid #22c55e;
+}
+
+.history-full-list .history-item.sell {
+    border-left: 3px solid #ef4444;
+}
+
+.history-full-list .history-info {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.history-full-list .history-side {
+    font-weight: 600;
+}
+
+.history-full-list .history-item.buy .history-side {
+    color: #22c55e;
+}
+
+.history-full-list .history-item.sell .history-side {
+    color: #ef4444;
+}
+
+.history-full-list .history-type {
+    color: #94a3b8;
+    font-size: 9px;
+    background: #e2e8f0;
+    padding: 1px 6px;
+    border-radius: 3px;
+}
+
+.history-full-list .history-qty {
+    font-weight: 500;
+    color: #1a2332;
+}
+
+.history-full-list .history-details {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.history-full-list .history-price {
+    font-family: 'Monaco', 'Menlo', monospace;
+    color: #475569;
+}
+
+.history-full-list .history-total {
+    font-weight: 600;
+    color: #1a2332;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.history-full-list .history-time {
+    color: #94a3b8;
+    font-size: 9px;
+}
+
+.history-panel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.history-panel::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+.history-panel::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* ===== СТАТУС ===== */
 .status-dot {
     width: 8px;
     height: 8px;
@@ -277,19 +430,11 @@
     100% { opacity: 0.5; transform: scale(0.8); }
 }
 
-
+/* ===== АДАПТИВ ===== */
 @media (max-width: 1200px) {
     .right-panel-new {
         min-width: 200px;
         max-width: 280px;
-    }
-    
-    .chart-wrapper .recharts-wrapper {
-        height: 350px !important;
-    }
-    
-    .chart-wrapper .recharts-surface {
-        height: 350px !important;
     }
 }
 
@@ -302,37 +447,36 @@
         max-width: 100%;
     }
     
+    .chart-area-full {
+        min-height: 300px;
+    }
+    
     .right-panel-new {
         max-width: none;
         min-width: unset;
         flex-direction: row;
     }
     
-    .chart-wrapper .recharts-wrapper {
-        height: 320px !important;
-    }
-    
-    .chart-wrapper .recharts-surface {
-        height: 320px !important;
-    }
-    
     .orderbook-wrapper-new {
         flex: 1;
-        min-height: 160px;
+        min-height: 180px;
         max-height: 220px;
     }
     
     .trade-wrapper-new {
         flex: 1;
-        min-height: 160px;
+        min-height: 180px;
         max-height: 220px;
+    }
+    
+    .bottom-tabs {
+        margin-top: 8px;
     }
 }
 
 @media (max-width: 768px) {
     .crypto-card {
         padding: 14px;
-        min-height: 600px;
     }
     
     .price {
@@ -347,12 +491,8 @@
         flex-direction: column;
     }
     
-    .chart-wrapper .recharts-wrapper {
-        height: 280px !important;
-    }
-    
-    .chart-wrapper .recharts-surface {
-        height: 280px !important;
+    .chart-area-full {
+        min-height: 250px;
     }
     
     .orderbook-wrapper-new {
@@ -362,18 +502,22 @@
     
     .trade-wrapper-new {
         min-height: 160px;
-        max-height: 220px;
+        max-height: 200px;
     }
     
-    .orderbook-wrapper-new .order-book-row {
-        height: 16px;
-        line-height: 12px;
+    .tab-btn {
         font-size: 10px;
+        padding: 5px 4px;
     }
     
-    .orderbook-wrapper-new .order-book-row .price,
-    .orderbook-wrapper-new .order-book-row .quantity,
-    .orderbook-wrapper-new .order-book-row .total {
-        font-size: 10px;
+    .history-full-list .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .history-full-list .history-details {
+        flex-wrap: wrap;
+        gap: 6px;
     }
 }

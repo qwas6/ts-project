@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { X, Eye, EyeOff, TrendingUp, TrendingDown, CandlestickChart as CandleIcon, LineChart as LineIcon } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { X, Eye, EyeOff, TrendingUp, TrendingDown, CandlestickChart as CandleIcon, LineChart as LineIcon, Wallet, History, Clock } from 'lucide-react';
 import { CandlestickChart } from '../CandlestickChart/CandlestickChart';
 import { OrderBook } from '../OrderBook/OrderBook';
 import { TradePanel } from '../TradePanel/TradePanel';
+import { CryptoWallet } from '../CryptoWallet/CryptoWallet';
+import { OpenOrders } from '../OpenOrders/OpenOrders';
 import { TIMEFRAME_CONFIG } from '../../constants';
 import type { ChartData, CandleData, Timeframe } from '../../types';
 import { formatPrice, formatChange } from '../../utils/helpers';
@@ -19,7 +21,13 @@ interface CryptoCardProps {
     timeframe: Timeframe;
     onTimeframeChange: (tf: Timeframe) => void;
     isConnected: boolean;
+    walletBalance: number;
+    onBuy: (symbol: string, quantity: number, price: number) => boolean;
+    onSell: (symbol: string, quantity: number, price: number) => boolean;
+    prices: Map<string, { price: number; change: number }>;
 }
+
+type TabType = 'wallet' | 'orders' | 'history';
 
 export const CryptoCard = React.memo(({
     symbol,
@@ -30,12 +38,24 @@ export const CryptoCard = React.memo(({
     onRemove,
     timeframe,
     onTimeframeChange,
-    isConnected
+    isConnected,
+    walletBalance,
+    onBuy,
+    onSell,
+    prices
 }: CryptoCardProps) => {
     const [showChart, setShowChart] = useState(false);
     const [chartType, setChartType] = useState<'line' | 'candle'>('line');
+    const [activeTab, setActiveTab] = useState<TabType>('wallet');
+    const openOrdersRef = useRef<any>(null);
 
     const isPositive = change >= 0;
+
+    const handleLimitOrder = (side: 'buy' | 'sell', price: number, quantity: number) => {
+        if (openOrdersRef.current) {
+            openOrdersRef.current.addLimitOrder(side, price, quantity);
+        }
+    };
 
     return (
         <div className="crypto-card">
@@ -98,21 +118,50 @@ export const CryptoCard = React.memo(({
                             </div>
                             
                             {chartType === 'line' && history.length > 0 && (
-                                <ResponsiveContainer width="100%" height={350}>
-                                    <LineChart data={history}>
+                                <div className="chart-area-full">
+                                    <LineChart
+                                        width={700}
+                                        height={400}
+                                        data={history}
+                                        margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                                    >
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                        <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#64748b' }} interval="preserveStartEnd" />
-                                        <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10, fill: '#64748b' }} />
+                                        <XAxis 
+                                            dataKey="time" 
+                                            tick={{ fontSize: 10, fill: '#64748b' }} 
+                                            interval="preserveStartEnd" 
+                                            tickMargin={2}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+                                        <YAxis 
+                                            domain={['auto', 'auto']} 
+                                            tick={{ fontSize: 10, fill: '#64748b' }} 
+                                            tickMargin={2}
+                                            axisLine={false}
+                                            tickLine={false}
+                                            width={40}
+                                        />
                                         <Tooltip 
-                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                            contentStyle={{ 
+                                                borderRadius: '8px', 
+                                                border: 'none', 
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                                            }}
                                             formatter={(value) => {
                                                 const num = typeof value === 'number' ? value : parseFloat(String(value));
                                                 return [`$${num.toFixed(2)}`, 'Цена'];
                                             }}
                                         />
-                                        <Line type="monotone" dataKey="price" stroke="#6366f1" strokeWidth={2} dot={false} />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="price" 
+                                            stroke="#6366f1" 
+                                            strokeWidth={2} 
+                                            dot={false} 
+                                        />
                                     </LineChart>
-                                </ResponsiveContainer>
+                                </div>
                             )}
                             
                             {chartType === 'candle' && <CandlestickChart data={candles} />}
@@ -123,8 +172,114 @@ export const CryptoCard = React.memo(({
                                 <OrderBook symbol={symbol} />
                             </div>
                             <div className="trade-wrapper-new">
-                                <TradePanel symbol={symbol} currentPrice={price} />
+                                <TradePanel 
+                                    symbol={symbol} 
+                                    currentPrice={price} 
+                                    walletBalance={walletBalance}
+                                    onBuy={onBuy}
+                                    onSell={onSell}
+                                    onLimitOrder={handleLimitOrder}
+                                />
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="bottom-tabs">
+                        <div className="tabs-header">
+                            <button 
+                                className={`tab-btn ${activeTab === 'wallet' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('wallet')}
+                            >
+                                <Wallet size={16} /> Кошелек
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('orders')}
+                            >
+                                <Clock size={16} /> Ордера
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('history')}
+                            >
+                                <History size={16} /> История
+                            </button>
+                        </div>
+
+                        <div className="tabs-content">
+                            {activeTab === 'wallet' && (
+                                <div className="tab-panel">
+                                    <CryptoWallet 
+                                        walletBalance={walletBalance}
+                                        onBuy={onBuy}
+                                        prices={prices}
+                                    />
+                                </div>
+                            )}
+                            {activeTab === 'orders' && (
+                                <div className="tab-panel">
+                                    <OpenOrders 
+                                        ref={openOrdersRef}
+                                        symbol={symbol}
+                                        currentPrice={price}
+                                        onOrderFilled={(order) => {
+                                            if (order.side === 'buy') {
+                                                onBuy(order.symbol, order.quantity, order.price);
+                                            } else {
+                                                onSell(order.symbol, order.quantity, order.price);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            )}
+                            {activeTab === 'history' && (
+                                <div className="tab-panel history-panel">
+                                    <div className="history-full">
+                                        <div className="history-full-header">
+                                            <span>📋 Полная история ордеров</span>
+                                            <button 
+                                                className="clear-history-btn"
+                                                onClick={() => {
+                                                    if (window.confirm('Очистить всю историю?')) {
+                                                        localStorage.removeItem('tradeHistory');
+                                                        window.location.reload();
+                                                    }
+                                                }}
+                                            >
+                                                Очистить всё
+                                            </button>
+                                        </div>
+                                        <div className="history-full-list">
+                                            {(() => {
+                                                const saved = localStorage.getItem('tradeHistory');
+                                                if (!saved) return <div className="history-empty">Нет ордеров</div>;
+                                                try {
+                                                    const orders = JSON.parse(saved);
+                                                    if (orders.length === 0) return <div className="history-empty">Нет ордеров</div>;
+                                                    return orders.map((order: any) => (
+                                                        <div key={order.id} className={`history-item ${order.side}`}>
+                                                            <div className="history-info">
+                                                                <span className="history-side">
+                                                                    {order.side === 'buy' ? '🟢 Покупка' : '🔴 Продажа'}
+                                                                </span>
+                                                                <span className="history-type">{order.type}</span>
+                                                                <span className="history-qty">{order.quantity} {order.symbol}</span>
+                                                            </div>
+                                                            <div className="history-details">
+                                                                <span className="history-price">${formatPrice(order.price)}</span>
+                                                                <span className="history-total">${formatPrice(order.total)}</span>
+                                                                <span className="history-time">{new Date(order.timestamp).toLocaleString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    ));
+                                                } catch (e) {
+                                                    return <div className="history-empty">Ошибка загрузки истории</div>;
+                                                }
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
