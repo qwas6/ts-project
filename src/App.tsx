@@ -9,12 +9,19 @@ import { useGlobalHistory } from './hooks/useGlobalHistory';
 import { CRYPTOS } from './constants';
 import './App.css';
 
+interface CryptoAsset {
+    symbol: string;
+    quantity: number;
+    averagePrice: number;
+}
+
 function App() {
     const [selected, setSelected] = useState<string[]>(['BTC', 'ETH', 'BNB']);
-    const [walletBalance, setWalletBalance] = useState(1000);
+    const [walletBalance, setWalletBalance] = useState(1000); 
     const [showBalance, setShowBalance] = useState(true);
     const [showDepositModal, setShowDepositModal] = useState(false);
     const [depositAmount, setDepositAmount] = useState<string>('');
+    const [cryptoAssets, setCryptoAssets] = useState<CryptoAsset[]>([]);
     
     const btc = useCryptoData('BTC', '10s');
     const eth = useCryptoData('ETH', '10s');
@@ -25,14 +32,23 @@ function App() {
     const allData = { BTC: btc, ETH: eth, BNB: bnb, SOL: sol, DOGE: doge };
     const globalHistory = useGlobalHistory(allData);
 
-
+    
     useEffect(() => {
-        const saved = localStorage.getItem('walletBalance');
-        if (saved) {
+        const savedBalance = localStorage.getItem('walletBalance');
+        if (savedBalance) {
             try {
-                setWalletBalance(parseFloat(saved));
+                setWalletBalance(parseFloat(savedBalance));
             } catch (e) {
                 console.error('Ошибка загрузки баланса:', e);
+            }
+        }
+        
+        const savedAssets = localStorage.getItem('cryptoAssets');
+        if (savedAssets) {
+            try {
+                setCryptoAssets(JSON.parse(savedAssets));
+            } catch (e) {
+                console.error('Ошибка загрузки активов:', e);
             }
         }
     }, []);
@@ -42,6 +58,11 @@ function App() {
         localStorage.setItem('walletBalance', String(newBalance));
     };
 
+    const saveAssets = (assets: CryptoAsset[]) => {
+        setCryptoAssets(assets);
+        localStorage.setItem('cryptoAssets', JSON.stringify(assets));
+    };
+
     const handleDeposit = (amount: number) => {
         const newBalance = walletBalance + amount;
         saveBalance(newBalance);
@@ -49,21 +70,78 @@ function App() {
         setShowDepositModal(false);
     };
 
+    
     const handleBuy = (symbol: string, quantity: number, price: number) => {
         const total = quantity * price;
         if (total > walletBalance) {
             toast.error(`Недостаточно средств! Нужно: $${total.toFixed(2)}, Доступно: $${walletBalance.toFixed(2)}`);
             return false;
         }
+        
         saveBalance(walletBalance - total);
+        
+        const existingAsset = cryptoAssets.find(a => a.symbol === symbol);
+        let newAssets: CryptoAsset[];
+        
+        if (existingAsset) {
+            const totalQuantity = existingAsset.quantity + quantity;
+            const totalCost = (existingAsset.quantity * existingAsset.averagePrice) + (quantity * price);
+            const newAveragePrice = totalCost / totalQuantity;
+            
+            newAssets = cryptoAssets.map(a => 
+                a.symbol === symbol 
+                    ? { ...a, quantity: totalQuantity, averagePrice: newAveragePrice }
+                    : a
+            );
+        } else {
+            newAssets = [...cryptoAssets, { 
+                symbol, 
+                quantity, 
+                averagePrice: price 
+            }];
+        }
+        
+        saveAssets(newAssets);
+    
         return true;
     };
 
-  
     const handleSell = (symbol: string, quantity: number, price: number) => {
+        const asset = cryptoAssets.find(a => a.symbol === symbol);
+        if (!asset) {
+            toast.error(`У вас нет ${symbol}`);
+            return false;
+        }
+        
+        if (asset.quantity < quantity) {
+            toast.error(`Недостаточно ${symbol}! Доступно: ${asset.quantity.toFixed(4)}`);
+            return false;
+        }
+        
         const total = quantity * price;
         saveBalance(walletBalance + total);
+        
+        const newQuantity = asset.quantity - quantity;
+        let newAssets: CryptoAsset[];
+        
+        if (newQuantity <= 0.0001) {
+            newAssets = cryptoAssets.filter(a => a.symbol !== symbol);
+        } else {
+            newAssets = cryptoAssets.map(a => 
+                a.symbol === symbol 
+                    ? { ...a, quantity: newQuantity }
+                    : a
+            );
+        }
+        
+        saveAssets(newAssets);
+        
         return true;
+    };
+
+    const getAssetBalance = (symbol: string): number => {
+        const asset = cryptoAssets.find(a => a.symbol === symbol);
+        return asset?.quantity || 0;
     };
 
     const addCrypto = (symbol: string) => {
@@ -84,7 +162,6 @@ function App() {
         return value.toFixed(2);
     };
 
-  
     const priceMap = new Map();
     Object.entries(allData).forEach(([symbol, data]) => {
         priceMap.set(symbol, { price: data.price, change: data.change });
@@ -171,6 +248,7 @@ function App() {
                                 onBuy={handleBuy}
                                 onSell={handleSell}
                                 prices={priceMap}
+                                assetBalance={getAssetBalance(symbol)}
                             />
                         );
                     })}
@@ -190,7 +268,6 @@ function App() {
                 </div>
             </div>
 
-      
             {showDepositModal && (
                 <div className="deposit-modal-overlay" onClick={() => setShowDepositModal(false)}>
                     <div className="deposit-modal" onClick={(e) => e.stopPropagation()}>

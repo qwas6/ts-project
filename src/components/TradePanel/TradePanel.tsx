@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { NumericFormat } from 'react-number-format';
 import { toast } from 'react-hot-toast';
 import { 
-    Wallet, History, Trash2,
+    History, Trash2,
     ShoppingBag, ShoppingCart,
-    Target, Sparkles
+    Target, Sparkles, Coins
 } from 'lucide-react';
 import './TradePanel.css';
- 
+
 interface Order {
     id: string;
     symbol: string;
@@ -24,6 +24,7 @@ interface TradePanelProps {
     symbol: string;
     currentPrice: number;
     walletBalance?: number;
+    assetBalance?: number;
     onBuy?: (symbol: string, quantity: number, price: number) => boolean;
     onSell?: (symbol: string, quantity: number, price: number) => boolean;
     onLimitOrder?: (side: 'buy' | 'sell', price: number, quantity: number) => void;
@@ -33,6 +34,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({
     symbol, 
     currentPrice,
     walletBalance = 0,
+    assetBalance = 0,
     onBuy,
     onSell,
     onLimitOrder
@@ -86,7 +88,6 @@ export const TradePanel: React.FC<TradePanelProps> = ({
                 toast.error('Введите корректную цену');
                 return;
             }
-          
             if (onLimitOrder) {
                 onLimitOrder('buy', p, qty);
                 setQuantity('');
@@ -96,8 +97,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({
             }
         }
 
-        
-        const orderPrice = currentPrice;
+        const orderPrice = orderType === 'limit' ? parseFloat(price) : currentPrice;
         const totalCost = qty * orderPrice;
 
         if (totalCost > walletBalance) {
@@ -113,7 +113,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({
         const newOrder: Order = {
             id: Date.now().toString(),
             symbol,
-            type: 'market',
+            type: orderType,
             side: 'buy',
             price: orderPrice,
             quantity: qty,
@@ -140,13 +140,17 @@ export const TradePanel: React.FC<TradePanelProps> = ({
             return;
         }
 
+        if (qty > assetBalance) {
+            toast.error(`Недостаточно ${symbol}! Доступно: ${assetBalance.toFixed(4)}`);
+            return;
+        }
+
         if (orderType === 'limit') {
             const p = parseFloat(price);
             if (!p || p <= 0) {
                 toast.error('Введите корректную цену');
                 return;
             }
-           
             if (onLimitOrder) {
                 onLimitOrder('sell', p, qty);
                 setQuantity('');
@@ -156,8 +160,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({
             }
         }
 
-      
-        const orderPrice = currentPrice;
+        const orderPrice = orderType === 'limit' ? parseFloat(price) : currentPrice;
         const totalCost = qty * orderPrice;
 
         if (onSell) {
@@ -168,7 +171,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({
         const newOrder: Order = {
             id: Date.now().toString(),
             symbol,
-            type: 'market',
+            type: orderType,
             side: 'sell',
             price: orderPrice,
             quantity: qty,
@@ -203,7 +206,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({
     return (
         <div className="trade-panel">
             <div className="trade-header">
-                <Wallet size={16} />
+                <Coins size={16} />
                 <h3>Торговля</h3>
                 <span className="trade-symbol">{symbol}/USDT</span>
                 <span className={`trade-price ${currentPrice >= 0 ? 'positive' : 'negative'}`}>
@@ -211,9 +214,15 @@ export const TradePanel: React.FC<TradePanelProps> = ({
                 </span>
             </div>
 
-            <div className="trade-balance">
-                <span>Доступно: </span>
-                <strong>${formatPrice(walletBalance)}</strong>
+            <div className="trade-balance-info">
+                <div className="balance-item">
+                    <span className="balance-label">USDT</span>
+                    <span className="balance-value">${formatPrice(walletBalance)}</span>
+                </div>
+                <div className="balance-item">
+                    <span className="balance-label">{symbol}</span>
+                    <span className="balance-value">{assetBalance.toFixed(4)}</span>
+                </div>
             </div>
 
             <div className="trade-type-buttons">
@@ -282,6 +291,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({
                 </div>
             </div>
 
+            
             <div className="trade-buttons-row">
                 <button
                     className="trade-action-btn buy"

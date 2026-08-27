@@ -22,6 +22,6 @@ export const COLORS: Record<string, string> = {
     BNB: '#f3ba2f',
     SOL: '#00ffbd',
     DOGE: '#c3a634'
-};
+}; 
 
 export const ALL_SYMBOLS = ['BTC', 'ETH', 'BNB', 'SOL', 'DOGE'];

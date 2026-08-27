@@ -25,9 +25,11 @@ interface CryptoCardProps {
     onBuy: (symbol: string, quantity: number, price: number) => boolean;
     onSell: (symbol: string, quantity: number, price: number) => boolean;
     prices: Map<string, { price: number; change: number }>;
+    assetBalance?: number;
 }
 
 type TabType = 'wallet' | 'orders' | 'history';
+type ChartTabType = 'line' | 'candle';
 
 export const CryptoCard = React.memo(({
     symbol,
@@ -42,10 +44,11 @@ export const CryptoCard = React.memo(({
     walletBalance,
     onBuy,
     onSell,
-    prices
+    prices,
+    assetBalance = 0
 }: CryptoCardProps) => {
     const [showChart, setShowChart] = useState(false);
-    const [chartType, setChartType] = useState<'line' | 'candle'>('line');
+    const [chartTab, setChartTab] = useState<ChartTabType>('line');
     const [activeTab, setActiveTab] = useState<TabType>('wallet');
     const openOrdersRef = useRef<any>(null);
 
@@ -102,22 +105,23 @@ export const CryptoCard = React.memo(({
                 <div className="chart-order-wrapper">
                     <div className="chart-order-row">
                         <div className="chart-wrapper">
-                            <div className="chart-type-buttons">
+                            <div className="chart-tabs">
                                 <button 
-                                    className={`type-btn ${chartType === 'line' ? 'active' : ''}`} 
-                                    onClick={() => setChartType('line')}
+                                    className={`chart-tab-btn ${chartTab === 'line' ? 'active' : ''}`}
+                                    onClick={() => setChartTab('line')}
                                 >
                                     <LineIcon size={14} /> Линейный
                                 </button>
                                 <button 
-                                    className={`type-btn ${chartType === 'candle' ? 'active' : ''}`} 
-                                    onClick={() => setChartType('candle')}
+                                    className={`chart-tab-btn ${chartTab === 'candle' ? 'active' : ''}`}
+                                    onClick={() => setChartTab('candle')}
                                 >
                                     <CandleIcon size={14} /> Свечной
                                 </button>
                             </div>
                             
-                            {chartType === 'line' && history.length > 0 && (
+                            
+                            {chartTab === 'line' && history.length > 0 && (
                                 <div className="chart-area-full">
                                     <LineChart
                                         width={700}
@@ -164,7 +168,7 @@ export const CryptoCard = React.memo(({
                                 </div>
                             )}
                             
-                            {chartType === 'candle' && <CandlestickChart data={candles} />}
+                            {chartTab === 'candle' && <CandlestickChart data={candles} />}
                         </div>
                         
                         <div className="right-panel-new">
@@ -179,11 +183,13 @@ export const CryptoCard = React.memo(({
                                     onBuy={onBuy}
                                     onSell={onSell}
                                     onLimitOrder={handleLimitOrder}
+                                    assetBalance={assetBalance}
                                 />
                             </div>
                         </div>
                     </div>
 
+                   
                     <div className="bottom-tabs">
                         <div className="tabs-header">
                             <button 
@@ -252,7 +258,7 @@ export const CryptoCard = React.memo(({
                                         <div className="history-full-list">
                                             {(() => {
                                                 const saved = localStorage.getItem('tradeHistory');
-                                                if (!saved) return <div className ="history-empty">Нет ордеров</div>;
+                                                if (!saved) return <div className="history-empty">Нет ордеров</div>;
                                                 try {
                                                     const orders = JSON.parse(saved);
                                                     if (orders.length === 0) return <div className="history-empty">Нет ордеров</div>;
