@@ -950,4 +950,76 @@ header {
         flex-direction: column;
         min-height: 250px;
     }
+}.chart-wrapper {
+    flex: 2.5;
+    min-width: 0;
+    max-width: 72%;
+    background: #0a0e17;
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+.chart-area-full {
+    flex: 1;
+    min-height: 380px;
+}
+
+.chart-tab-btn {
+    padding: 5px 14px;
+    background: rgba(255,255,255,0.05);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.chart-tab-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.8);
+}
+
+.chart-tab-btn.active {
+    background: rgba(99, 102, 241, 0.3);
+    color: white;
+}
+
+.timeframe-bar-under {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.tf-badge-under {
+    padding: 4px 12px;
+    background: rgba(255,255,255,0.05);
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: rgba(255,255,255,0.4);
+}
+
+.tf-badge-under:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.7);
+}
+
+.tf-badge-under.active {
+    background: rgba(99, 102, 241, 0.3);
+    color: white;
 }
