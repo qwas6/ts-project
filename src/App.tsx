@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { 
-    Rocket, Plus, BarChart3, Clock, BadgeDollarSign, Eye, EyeOff, 
-    TrendingUp, TrendingDown, CandlestickChart as CandleIcon, 
-    LineChart as LineIcon, Wallet, History, X 
+import {
+    Rocket, Plus, Clock, BadgeDollarSign, Eye, EyeOff,
+    TrendingUp, TrendingDown, CandlestickChart as CandleIcon,
+    LineChart as LineIcon, Wallet, History, Repeat
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { CandlestickChart } from './components/CandlestickChart/CandlestickChart';
@@ -13,10 +13,11 @@ import { CryptoWallet } from './components/CryptoWallet/CryptoWallet';
 import { OpenOrders } from './components/OpenOrders/OpenOrders';
 import { HistoryLog } from './components/HistoryLog/HistoryLog';
 import { HistoryChart } from './components/HistoryChart/HistoryChart';
+import { Converter } from './components/Converter/Converter';
 import { useCryptoData } from './hooks/useCryptoData';
 import { useGlobalHistory } from './hooks/useGlobalHistory';
 import { TIMEFRAME_CONFIG, CRYPTOS } from './constants';
-import { formatPrice, formatChange } from './utils/helpers';
+import { formatPrice } from './utils/helpers';
 import './App.css';
 
 interface CryptoAsset {
@@ -27,37 +28,50 @@ interface CryptoAsset {
 
 type TabType = 'wallet' | 'orders' | 'history';
 type ChartTabType = 'line' | 'candle';
-type TimeframeType = '5s' | '10s' | '30s' | '1m' | '5m';
+type TimeframeType = '1m' | '5m' | '15m' | '1h' | '4h';
 
 function App() {
     const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
     const [walletBalance, setWalletBalance] = useState(1000);
     const [showBalance, setShowBalance] = useState(true);
     const [showDepositModal, setShowDepositModal] = useState(false);
+    const [showConverter, setShowConverter] = useState(false);
     const [depositAmount, setDepositAmount] = useState<string>('');
     const [cryptoAssets, setCryptoAssets] = useState<CryptoAsset[]>([]);
     const [showChart, setShowChart] = useState(true);
     const [chartTab, setChartTab] = useState<ChartTabType>('line');
     const [activeTab, setActiveTab] = useState<TabType>('wallet');
-    const [timeframe, setTimeframe] = useState<TimeframeType>('10s');
+
+    const [timeframes, setTimeframes] = useState<Record<string, TimeframeType>>(() => {
+        const saved = localStorage.getItem('timeframes');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.error('Ошибка загрузки таймфреймов:', e);
+            }
+        }
+        return {
+            BTC: '1m',
+            ETH: '1m',
+            BNB: '1m',
+            SOL: '1m',
+            DOGE: '1m'
+        };
+    });
+
     const openOrdersRef = useRef<any>(null);
-   
-    const btc = useCryptoData('BTC', timeframe);
-    const eth = useCryptoData('ETH', timeframe);
-    const bnb = useCryptoData('BNB', timeframe);
-    const sol = useCryptoData('SOL', timeframe);
-    const doge = useCryptoData('DOGE', timeframe);
-    
+
+    const btc = useCryptoData('BTC', timeframes.BTC || '1m');
+    const eth = useCryptoData('ETH', timeframes.ETH || '1m');
+    const bnb = useCryptoData('BNB', timeframes.BNB || '1m');
+    const sol = useCryptoData('SOL', timeframes.SOL || '1m');
+    const doge = useCryptoData('DOGE', timeframes.DOGE || '1m');
+
     const allData = { BTC: btc, ETH: eth, BNB: bnb, SOL: sol, DOGE: doge };
     const currentData = allData[selectedSymbol as keyof typeof allData];
     const globalHistory = useGlobalHistory(allData);
 
-  
-    useEffect(() => {
-        console.log(`Таймфрейм изменен на: ${timeframe}`);
-    }, [timeframe]);
-
-    
     useEffect(() => {
         const savedBalance = localStorage.getItem('walletBalance');
         if (savedBalance) {
@@ -67,7 +81,7 @@ function App() {
                 console.error('Ошибка загрузки баланса:', e);
             }
         }
-        
+
         const savedAssets = localStorage.getItem('cryptoAssets');
         if (savedAssets) {
             try {
@@ -88,6 +102,15 @@ function App() {
         localStorage.setItem('cryptoAssets', JSON.stringify(assets));
     };
 
+    const updateTimeframe = (symbol: string, tf: TimeframeType) => {
+        setTimeframes(prev => {
+            const updated = { ...prev, [symbol]: tf };
+            localStorage.setItem('timeframes', JSON.stringify(updated));
+            return updated;
+        });
+        toast.success(`${symbol}: ${TIMEFRAME_CONFIG[tf].label}`);
+    };
+
     const handleDeposit = (amount: number) => {
         const newBalance = walletBalance + amount;
         saveBalance(newBalance);
@@ -101,30 +124,30 @@ function App() {
             toast.error(`Недостаточно средств! Нужно: $${total.toFixed(2)}, Доступно: $${walletBalance.toFixed(2)}`);
             return false;
         }
-        
+
         saveBalance(walletBalance - total);
-        
+
         const existingAsset = cryptoAssets.find(a => a.symbol === symbol);
         let newAssets: CryptoAsset[];
-        
+
         if (existingAsset) {
             const totalQuantity = existingAsset.quantity + quantity;
             const totalCost = (existingAsset.quantity * existingAsset.averagePrice) + (quantity * price);
             const newAveragePrice = totalCost / totalQuantity;
-            
-            newAssets = cryptoAssets.map(a => 
-                a.symbol === symbol 
+
+            newAssets = cryptoAssets.map(a =>
+                a.symbol === symbol
                     ? { ...a, quantity: totalQuantity, averagePrice: newAveragePrice }
                     : a
             );
         } else {
-            newAssets = [...cryptoAssets, { 
-                symbol, 
-                quantity, 
-                averagePrice: price 
+            newAssets = [...cryptoAssets, {
+                symbol,
+                quantity,
+                averagePrice: price
             }];
         }
-        
+
         saveAssets(newAssets);
         toast.success(`Куплено ${quantity} ${symbol} за $${total.toFixed(2)}!`);
         return true;
@@ -136,28 +159,28 @@ function App() {
             toast.error(`У вас нет ${symbol}`);
             return false;
         }
-        
+
         if (asset.quantity < quantity) {
             toast.error(`Недостаточно ${symbol}! Доступно: ${asset.quantity.toFixed(4)}`);
             return false;
         }
-        
+
         const total = quantity * price;
         saveBalance(walletBalance + total);
-        
+
         const newQuantity = asset.quantity - quantity;
         let newAssets: CryptoAsset[];
-        
+
         if (newQuantity <= 0.0001) {
             newAssets = cryptoAssets.filter(a => a.symbol !== symbol);
         } else {
-            newAssets = cryptoAssets.map(a => 
-                a.symbol === symbol 
+            newAssets = cryptoAssets.map(a =>
+                a.symbol === symbol
                     ? { ...a, quantity: newQuantity }
                     : a
             );
         }
-        
+
         saveAssets(newAssets);
         toast.success(`Продано ${quantity} ${symbol} за $${total.toFixed(2)}!`);
         return true;
@@ -166,6 +189,88 @@ function App() {
     const getAssetBalance = (symbol: string): number => {
         const asset = cryptoAssets.find(a => a.symbol === symbol);
         return asset?.quantity || 0;
+    };
+
+    const getPriceInUsdt = (symbol: string): number => {
+        if (symbol === 'USDT') return 1;
+        return allData[symbol as keyof typeof allData]?.price || 0;
+    };
+
+    const handleConvert = (
+        fromSymbol: string,
+        toSymbol: string,
+        fromAmount: number,
+        toAmount: number
+    ): boolean => {
+        if (fromSymbol === toSymbol) {
+            toast.error('Выберите разные валюты');
+            return false;
+        }
+
+        const fromPrice = getPriceInUsdt(fromSymbol);
+        const toPrice = getPriceInUsdt(toSymbol);
+
+        if (fromPrice <= 0 || toPrice <= 0) {
+            toast.error('Цена недоступна');
+            return false;
+        }
+
+        const usdtValue = fromAmount * fromPrice;
+
+        let newBalance = walletBalance;
+        let newAssets = [...cryptoAssets];
+
+        if (fromSymbol === 'USDT') {
+            if (fromAmount > walletBalance) {
+                toast.error('Недостаточно USDT');
+                return false;
+            }
+            newBalance -= fromAmount;
+        } else {
+            const fromAsset = newAssets.find(a => a.symbol === fromSymbol);
+            if (!fromAsset || fromAsset.quantity < fromAmount) {
+                toast.error(`Недостаточно ${fromSymbol}`);
+                return false;
+            }
+            const remaining = fromAsset.quantity - fromAmount;
+            if (remaining <= 0.0000001) {
+                newAssets = newAssets.filter(a => a.symbol !== fromSymbol);
+            } else {
+                newAssets = newAssets.map(a =>
+                    a.symbol === fromSymbol ? { ...a, quantity: remaining } : a
+                );
+            }
+        }
+
+        if (toSymbol === 'USDT') {
+            newBalance += toAmount;
+        } else {
+            const toAsset = newAssets.find(a => a.symbol === toSymbol);
+            if (toAsset) {
+                const totalQuantity = toAsset.quantity + toAmount;
+                const totalCost = (toAsset.quantity * toAsset.averagePrice) + usdtValue;
+                const newAvg = totalCost / totalQuantity;
+                newAssets = newAssets.map(a =>
+                    a.symbol === toSymbol
+                        ? { ...a, quantity: totalQuantity, averagePrice: newAvg }
+                        : a
+                );
+            } else {
+                newAssets = [...newAssets, {
+                    symbol: toSymbol,
+                    quantity: toAmount,
+                    averagePrice: toPrice
+                }];
+            }
+        }
+
+        saveBalance(newBalance);
+        saveAssets(newAssets);
+
+        toast.success(
+            `Конвертировано ${fromAmount.toFixed(6)} ${fromSymbol} → ${toAmount.toFixed(6)} ${toSymbol}`
+        );
+        return true;
     };
 
     const handleLimitOrder = (side: 'buy' | 'sell', price: number, quantity: number) => {
@@ -179,15 +284,9 @@ function App() {
         priceMap.set(symbol, { price: data.price, change: data.change });
     });
 
-    const isPositive = currentData?.change >= 0;
+    const isPositive = (currentData?.change || 0) >= 0;
     const currentPrice = currentData?.price || 0;
     const currentChange = currentData?.change || 0;
-
-   
-    const handleTimeframeChange = (newTimeframe: TimeframeType) => {
-        setTimeframe(newTimeframe);
-
-    };
 
     return (
         <div className="app">
@@ -200,7 +299,6 @@ function App() {
                                 <Rocket size={28} />
                                 Crypto Live Tracker
                             </h1>
-                            
                         </div>
                         <div className="header-right">
                             <div className="wallet-header">
@@ -210,14 +308,21 @@ function App() {
                                     {showBalance ? `${formatPrice(walletBalance)}` : '••••••'}
                                 </span>
                                 <div className="wallet-actions-header">
-                                    <button 
+                                    <button
                                         className="wallet-btn-small"
                                         onClick={() => setShowBalance(!showBalance)}
                                         title={showBalance ? 'Скрыть баланс' : 'Показать баланс'}
                                     >
                                         {showBalance ? <EyeOff size={14} color="white" /> : <Eye size={14} color="white" />}
                                     </button>
-                                    <button 
+                                    <button
+                                        className="wallet-btn-small"
+                                        onClick={() => setShowConverter(true)}
+                                        title="Конвертация валют"
+                                    >
+                                        <Repeat size={14} color="white" />
+                                    </button>
+                                    <button
                                         className="wallet-btn-small deposit-btn-header"
                                         onClick={() => setShowDepositModal(true)}
                                         title="Пополнить баланс"
@@ -230,7 +335,6 @@ function App() {
                     </div>
                 </header>
 
-                
                 <div className="symbol-tabs">
                     {CRYPTOS.map((crypto) => {
                         const data = allData[crypto.symbol as keyof typeof allData];
@@ -245,15 +349,14 @@ function App() {
                                 <span className="symbol-price">
                                     {formatPrice(data?.price || 0)}
                                 </span>
-                                <span className={`symbol-change ${data?.change >= 0 ? 'positive' : 'negative'}`}>
-                                    {data?.change >= 0 ? '+' : ''}{data?.change?.toFixed(2) || '0.00'}%
+                                <span className={`symbol-change ${(data?.change || 0) >= 0 ? 'positive' : 'negative'}`}>
+                                    {(data?.change || 0) >= 0 ? '+' : ''}{(data?.change || 0).toFixed(2)}%
                                 </span>
                             </button>
                         );
                     })}
                 </div>
 
-                {/* ИНФО О МОНЕТЕ */}
                 <div className="crypto-info-header">
                     <div className="crypto-title">
                         <h2>{selectedSymbol}</h2>
@@ -271,7 +374,7 @@ function App() {
                             {Math.abs(currentChange).toFixed(2)}%
                         </p>
                     </div>
-                    <button 
+                    <button
                         className="chart-toggle-btn"
                         onClick={() => setShowChart(!showChart)}
                     >
@@ -280,7 +383,6 @@ function App() {
                     </button>
                 </div>
 
-             
                 <div className="main-content">
                     <div className="chart-order-wrapper">
                         <div className="chart-order-row">
@@ -288,90 +390,88 @@ function App() {
                                 {showChart && (
                                     <>
                                         <div className="chart-tabs">
-                                            <button 
+                                            <button
                                                 className={`chart-tab-btn ${chartTab === 'line' ? 'active' : ''}`}
                                                 onClick={() => setChartTab('line')}
                                             >
                                                 <LineIcon size={14} /> Линейный
                                             </button>
-                                            <button 
+                                            <button
                                                 className={`chart-tab-btn ${chartTab === 'candle' ? 'active' : ''}`}
                                                 onClick={() => setChartTab('candle')}
                                             >
                                                 <CandleIcon size={14} /> Свечной
                                             </button>
                                         </div>
-                                        
-                                        {chartTab === 'line' && currentData?.history.length > 0 && (
+
+                                        {chartTab === 'line' && (currentData?.history.length || 0) > 0 && (
                                             <div className="chart-area-full">
                                                 <ResponsiveContainer width="100%" height={400}>
-                                                    <LineChart data={currentData.history} key={`line-${timeframe}`}>
+                                                    <LineChart data={currentData.history}>
                                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                                        <XAxis 
-                                                            dataKey="time" 
-                                                            tick={{ fontSize: 10, fill: '#64748b' }} 
-                                                            interval="preserveStartEnd" 
+                                                        <XAxis
+                                                            dataKey="time"
+                                                            tick={{ fontSize: 10, fill: '#64748b' }}
+                                                            interval="preserveStartEnd"
                                                             tickMargin={8}
-                                                            axisLine={true}
-                                                            tickLine={true}
                                                         />
-                                                        <YAxis 
-                                                            domain={['auto', 'auto']} 
-                                                            tick={{ fontSize: 10, fill: '#64748b' }} 
-                                                            tickMargin={2}
-                                                            axisLine={false}
-                                                            tickLine={false}
+                                                        <YAxis
+                                                            domain={['auto', 'auto']}
+                                                            tick={{ fontSize: 10, fill: '#64748b' }}
                                                             width={40}
                                                         />
-                                                        <Tooltip 
-                                                            contentStyle={{ 
-                                                                borderRadius: '8px', 
-                                                                border: 'none', 
-                                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                                                        <Tooltip
+                                                            contentStyle={{
+                                                                borderRadius: '8px',
+                                                                border: 'none',
+                                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                                             }}
                                                             formatter={(value) => {
                                                                 const num = typeof value === 'number' ? value : parseFloat(String(value));
                                                                 return [`${num.toFixed(2)}`, 'Цена'];
                                                             }}
                                                         />
-                                                        <Line 
-                                                            type="monotone" 
-                                                            dataKey="price" 
-                                                            stroke="#6366f1" 
-                                                            strokeWidth={2} 
-                                                            dot={false} 
+                                                        <Line
+                                                            type="monotone"
+                                                            dataKey="price"
+                                                            stroke="#6366f1"
+                                                            strokeWidth={2}
+                                                            dot={false}
                                                         />
                                                     </LineChart>
                                                 </ResponsiveContainer>
                                             </div>
                                         )}
-                                        
-                                        {chartTab === 'candle' && <CandlestickChart data={currentData?.candles || []} key={`candle-${timeframe}`} />}
+
+                                        {chartTab === 'candle' && (
+                                            <div className="chart-area-full">
+                                                <CandlestickChart data={currentData?.candles || []} />
+                                            </div>
+                                        )}
                                     </>
                                 )}
-                                
-                               
+
                                 <div className="timeframe-bar-under">
-                                    {(Object.entries(TIMEFRAME_CONFIG) as [TimeframeType, { ms: number; label: string }][]).map(([key, config]) => (
+                                    {(Object.entries(TIMEFRAME_CONFIG) as [TimeframeType, { ms: number; label: string; binance: string }][]).map(([key, config]) => (
                                         <button
                                             key={key}
-                                            className={`tf-badge-under ${timeframe === key ? 'active' : ''}`}
-                                            onClick={() => handleTimeframeChange(key)}
+                                            className={`tf-badge-under ${timeframes[selectedSymbol] === key ? 'active' : ''}`}
+                                            onClick={() => updateTimeframe(selectedSymbol, key)}
                                         >
                                             {config.label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                            
+
                             <div className="right-panel-new">
                                 <div className="orderbook-wrapper-new">
                                     <OrderBook symbol={selectedSymbol} />
                                 </div>
                                 <div className="trade-wrapper-new">
-                                    <TradePanel 
-                                        symbol={selectedSymbol} 
-                                        currentPrice={currentPrice} 
+                                    <TradePanel
+                                        symbol={selectedSymbol}
+                                        currentPrice={currentPrice}
                                         walletBalance={walletBalance}
                                         onBuy={handleBuy}
                                         onSell={handleSell}
@@ -382,22 +482,21 @@ function App() {
                             </div>
                         </div>
 
-                       
                         <div className="bottom-tabs">
                             <div className="tabs-header">
-                                <button 
+                                <button
                                     className={`tab-btn ${activeTab === 'wallet' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('wallet')}
                                 >
                                     <Wallet size={16} /> Кошелек
                                 </button>
-                                <button 
+                                <button
                                     className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('orders')}
                                 >
                                     <Clock size={16} /> Ордера
                                 </button>
-                                <button 
+                                <button
                                     className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('history')}
                                 >
@@ -408,7 +507,7 @@ function App() {
                             <div className="tabs-content">
                                 {activeTab === 'wallet' && (
                                     <div className="tab-panel">
-                                        <CryptoWallet 
+                                        <CryptoWallet
                                             walletBalance={walletBalance}
                                             onBuy={handleBuy}
                                             prices={priceMap}
@@ -417,7 +516,7 @@ function App() {
                                 )}
                                 {activeTab === 'orders' && (
                                     <div className="tab-panel">
-                                        <OpenOrders 
+                                        <OpenOrders
                                             ref={openOrdersRef}
                                             symbol={selectedSymbol}
                                             currentPrice={currentPrice}
@@ -435,8 +534,8 @@ function App() {
                                     <div className="tab-panel history-panel">
                                         <div className="history-full">
                                             <div className="history-full-header">
-                                                <span>📋 Полная история ордеров</span>
-                                                <button 
+                                                <span>История ордеров</span>
+                                                <button
                                                     className="clear-history-btn"
                                                     onClick={() => {
                                                         if (window.confirm('Очистить всю историю?')) {
@@ -459,7 +558,7 @@ function App() {
                                                             <div key={order.id} className={`history-item ${order.side}`}>
                                                                 <div className="history-info">
                                                                     <span className="history-side">
-                                                                        {order.side === 'buy' ? '🟢 Покупка' : '🔴 Продажа'}
+                                                                        {order.side === 'buy' ? 'Покупка' : 'Продажа'}
                                                                     </span>
                                                                     <span className="history-type">{order.type}</span>
                                                                     <span className="history-qty">{order.quantity} {order.symbol}</span>
@@ -484,14 +583,21 @@ function App() {
                     </div>
                 </div>
 
-                
                 <div className="sidebar">
                     <HistoryLog history={globalHistory} />
                     <HistoryChart history={globalHistory} />
                 </div>
             </div>
 
-           
+            <Converter
+                isOpen={showConverter}
+                onClose={() => setShowConverter(false)}
+                prices={priceMap}
+                walletBalance={walletBalance}
+                assets={cryptoAssets}
+                onConvert={handleConvert}
+            />
+
             {showDepositModal && (
                 <div className="deposit-modal-overlay" onClick={() => setShowDepositModal(false)}>
                     <div className="deposit-modal" onClick={(e) => e.stopPropagation()}>
@@ -500,7 +606,7 @@ function App() {
                                 <BadgeDollarSign size={20} style={{ display: 'inline-block', marginRight: '8px' }} />
                                 Пополнение баланса
                             </h4>
-                            <button 
+                            <button
                                 className="modal-close-btn"
                                 onClick={() => setShowDepositModal(false)}
                             >
@@ -526,7 +632,7 @@ function App() {
                                         min="1"
                                         step="1"
                                     />
-                                    <button 
+                                    <button
                                         className="deposit-custom-btn"
                                         onClick={() => {
                                             const amount = parseFloat(depositAmount);
