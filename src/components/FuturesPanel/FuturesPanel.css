@@ -1,0 +1,185 @@
+.futures-panel {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px;
+    border: 1px solid #e8edf5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.futures-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e8edf5;
+}
+
+.futures-header h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a2332;
+    margin: 0;
+    flex: 1;
+}
+
+.futures-symbol-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6366f1;
+    background: #eef2ff;
+    padding: 2px 10px;
+    border-radius: 10px;
+}
+
+.futures-leverage-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #f59e0b;
+    background: #fef3c7;
+    padding: 2px 10px;
+    border-radius: 10px;
+}
+
+.futures-side-buttons {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.futures-side-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.futures-side-btn.long.active {
+    background: #22c55e;
+    color: white;
+}
+
+.futures-side-btn.short.active {
+    background: #ef4444;
+    color: white;
+}
+
+.futures-side-btn:hover:not(.active) {
+    background: #e2e8f0;
+}
+
+.futures-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.futures-field-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #8a9bb5;
+}
+
+.futures-field-input {
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', monospace;
+    color: #1a2332;
+    outline: none;
+    transition: all 0.2s;
+    background: #ffffff;
+}
+
+.futures-field-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.futures-info {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.futures-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.futures-info-label {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.futures-info-value {
+    color: #1a2332;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.futures-info-value.highlight {
+    color: #6366f1;
+}
+
+.futures-open-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+}
+
+.futures-open-btn.long {
+    background: #22c55e;
+}
+
+.futures-open-btn.long:hover:not(:disabled) {
+    background: #16a34a;
+    transform: translateY(-1px);
+}
+
+.futures-open-btn.short {
+    background: #ef4444;
+}
+
+.futures-open-btn.short:hover:not(:disabled) {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.futures-open-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.futures-balance-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #8a9bb5;
+    margin-top: 8px;
+}

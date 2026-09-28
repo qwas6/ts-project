@@ -1,0 +1,309 @@
+.profit-calc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2500;
+    padding: 20px;
+    animation: profitFade 0.2s ease;
+}
+
+@keyframes profitFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.profit-calc-modal {
+    width: 100%;
+    max-width: 460px;
+    background: #1a2332;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    padding: 24px;
+    color: #e2e8f0;
+    animation: profitIn 0.25s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+[data-theme="light"] .profit-calc-modal {
+    background: #ffffff;
+    color: #1a2332;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+@keyframes profitIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.profit-calc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.profit-calc-header h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profit-calc-close {
+    width: 34px;
+    height: 34px;
+    background: #ef4444;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s;
+}
+
+.profit-calc-close:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
+
+.profit-calc-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+[data-theme="light"] .profit-calc-empty {
+    color: #94a3b8;
+}
+
+.profit-calc-field {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+
+[data-theme="light"] .profit-calc-field {
+    background: #f8fafc;
+    border-color: #e8edf5;
+}
+
+.profit-calc-field-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 6px;
+    display: block;
+}
+
+[data-theme="light"] .profit-calc-field-label {
+    color: #64748b;
+}
+
+.profit-calc-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.profit-calc-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', monospace;
+    color: #e2e8f0;
+    min-width: 0;
+}
+
+[data-theme="light"] .profit-calc-input {
+    color: #1a2332;
+}
+
+.profit-calc-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.profit-calc-select {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 7px 10px;
+    cursor: pointer;
+    outline: none;
+    min-width: 90px;
+}
+
+[data-theme="light"] .profit-calc-select {
+    background: #ffffff;
+    color: #1a2332;
+    border-color: #e2e8f0;
+}
+
+.profit-calc-select option {
+    background: #1a2332;
+    color: #e2e8f0;
+}
+
+.profit-calc-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.profit-calc-stat {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+}
+
+[data-theme="light"] .profit-calc-stat {
+    background: #f8fafc;
+    border-color: #e8edf5;
+}
+
+.profit-calc-stat-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 4px;
+}
+
+[data-theme="light"] .profit-calc-stat-label {
+    color: #64748b;
+}
+
+.profit-calc-stat-value {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', monospace;
+    color: #e2e8f0;
+}
+
+[data-theme="light"] .profit-calc-stat-value {
+    color: #1a2332;
+}
+
+.profit-calc-result {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 12px;
+    text-align: center;
+}
+
+.profit-calc-result.loss {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.profit-calc-result-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+}
+
+[data-theme="light"] .profit-calc-result-label {
+    color: #64748b;
+}
+
+.profit-calc-result-value {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'Monaco', 'Menlo', monospace;
+    color: #22c55e;
+    line-height: 1.1;
+}
+
+.profit-calc-result.loss .profit-calc-result-value {
+    color: #ef4444;
+}
+
+.profit-calc-result-percent {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(34, 197, 94, 0.8);
+    margin-top: 4px;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.profit-calc-result.loss .profit-calc-result-percent {
+    color: rgba(239, 68, 68, 0.8);
+}
+
+.profit-calc-hint {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 12px;
+}
+
+[data-theme="light"] .profit-calc-hint {
+    color: #94a3b8;
+}
+
+.profit-calc-presets {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.profit-calc-preset {
+    flex: 1;
+    padding: 6px 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 60px;
+}
+
+[data-theme="light"] .profit-calc-preset {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+
+.profit-calc-preset:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+    color: #c7d2fe;
+}
+
+.profit-calc-preset.active {
+    background: #6366f1;
+    border-color: #6366f1;
+    color: white;
+}

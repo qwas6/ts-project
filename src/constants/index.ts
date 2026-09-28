@@ -1,11 +1,11 @@
 import type { Timeframe } from '../types';
 
-export const TIMEFRAME_CONFIG: Record<Timeframe, { ms: number; label: string }> = {
-    '5s': { ms: 5000, label: '5 сек' },
-    '10s': { ms: 10000, label: '10 сек' },
-    '30s': { ms: 30000, label: '30 сек' },
-    '1m': { ms: 60000, label: '1 мин' },
-    '5m': { ms: 300000, label: '5 мин' }
+export const TIMEFRAME_CONFIG: Record<Timeframe, { ms: number; label: string; binance: string }> = {
+    '1m':  { ms: 60_000,           label: '1 мин',  binance: '1m'  },
+    '5m':  { ms: 5 * 60_000,       label: '5 мин',  binance: '5m'  },
+    '15m': { ms: 15 * 60_000,      label: '15 мин', binance: '15m' },
+    '1h':  { ms: 60 * 60_000,      label: '1 час',  binance: '1h'  },
+    '4h':  { ms: 4 * 60 * 60_000,  label: '4 часа', binance: '4h'  }
 };
 
 export const CRYPTOS = [
@@ -22,6 +22,6 @@ export const COLORS: Record<string, string> = {
     BNB: '#f3ba2f',
     SOL: '#00ffbd',
     DOGE: '#c3a634'
-}; 
+};
 
 export const ALL_SYMBOLS = ['BTC', 'ETH', 'BNB', 'SOL', 'DOGE'];

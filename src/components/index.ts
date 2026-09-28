@@ -7,3 +7,6 @@ export { TradePanel } from './TradePanel/TradePanel';
 export { CryptoWallet } from './CryptoWallet/CryptoWallet'; 
 export { Converter } from './Converter/Converter';
 export { Slider } from './Slider/Slider';
+export { ProfitCalculator } from './ProfitCalculator/ProfitCalculator';
+export { FuturesPanel } from './FuturesPanel/./FuturesPanel';
+export { PositionsList } from './PositionsList/PositionsList';

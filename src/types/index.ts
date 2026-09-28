@@ -21,4 +21,19 @@ export interface HistoryItem {
     timestamp: number;
 }
 
-export type Timeframe = '5s' | '10s' | '30s' | '1m' | '5m';
+export type Timeframe = '1m' | '5m' | '15m' | '1h' | '4h';
+
+export interface FuturesPosition {
+    id: string;
+    symbol: string;
+    side: 'long' | 'short';
+    entryPrice: number;
+    quantity: number;
+    leverage: number;
+    margin: number;
+    openedAt: number;
+    status: 'open' | 'closed';
+    closedAt: number | null;
+    closePrice: number | null;
+    realizedPnl: number | null;
+}

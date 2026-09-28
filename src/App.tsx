@@ -3,7 +3,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import {
     Rocket, Plus, Clock, BadgeDollarSign, Eye, EyeOff,
     TrendingUp, TrendingDown, CandlestickChart as CandleIcon,
-    LineChart as LineIcon, Wallet, History, Repeat
+    LineChart as LineIcon, Wallet, History, Repeat, Calculator
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { CandlestickChart } from './components/CandlestickChart/CandlestickChart';
@@ -14,8 +14,12 @@ import { OpenOrders } from './components/OpenOrders/OpenOrders';
 import { HistoryLog } from './components/HistoryLog/HistoryLog';
 import { HistoryChart } from './components/HistoryChart/HistoryChart';
 import { Converter } from './components/Converter/Converter';
+import { ProfitCalculator } from './components/ProfitCalculator/ProfitCalculator';
+import { FuturesPanel } from './components/FuturesPanel/FuturesPanel';
+import { PositionsList } from './components/PositionsList/PositionsList';
 import { useCryptoData } from './hooks/useCryptoData';
 import { useGlobalHistory } from './hooks/useGlobalHistory';
+import { useFutures } from './hooks/useFutures';
 import { TIMEFRAME_CONFIG, CRYPTOS } from './constants';
 import { formatPrice } from './utils/helpers';
 import './App.css';
@@ -26,7 +30,7 @@ interface CryptoAsset {
     averagePrice: number;
 }
 
-type TabType = 'wallet' | 'orders' | 'history';
+type TabType = 'wallet' | 'orders' | 'history' | 'positions';
 type ChartTabType = 'line' | 'candle';
 type TimeframeType = '1m' | '5m' | '15m' | '1h' | '4h';
 
@@ -36,6 +40,7 @@ function App() {
     const [showBalance, setShowBalance] = useState(true);
     const [showDepositModal, setShowDepositModal] = useState(false);
     const [showConverter, setShowConverter] = useState(false);
+    const [showProfitCalc, setShowProfitCalc] = useState(false);
     const [depositAmount, setDepositAmount] = useState<string>('');
     const [cryptoAssets, setCryptoAssets] = useState<CryptoAsset[]>([]);
     const [showChart, setShowChart] = useState(true);
@@ -61,6 +66,7 @@ function App() {
     });
 
     const openOrdersRef = useRef<any>(null);
+    const futures = useFutures();
 
     const btc = useCryptoData('BTC', timeframes.BTC || '1m');
     const eth = useCryptoData('ETH', timeframes.ETH || '1m');
@@ -76,7 +82,7 @@ function App() {
         const savedBalance = localStorage.getItem('walletBalance');
         if (savedBalance) {
             try {
-                setWalletBalance(parseFloat(savedBalance));
+                setWalletBalance(Number(savedBalance));
             } catch (e) {
                 console.error('Ошибка загрузки баланса:', e);
             }
@@ -85,7 +91,14 @@ function App() {
         const savedAssets = localStorage.getItem('cryptoAssets');
         if (savedAssets) {
             try {
-                setCryptoAssets(JSON.parse(savedAssets));
+                const parsed = JSON.parse(savedAssets);
+                const sanitized = parsed.map((a: any) => ({
+                    symbol: String(a.symbol),
+                    quantity: Number(a.quantity) || 0,
+                    averagePrice: Number(a.averagePrice) || 0
+                }));
+                setCryptoAssets(sanitized);
+                localStorage.setItem('cryptoAssets', JSON.stringify(sanitized));
             } catch (e) {
                 console.error('Ошибка загрузки активов:', e);
             }
@@ -98,8 +111,13 @@ function App() {
     };
 
     const saveAssets = (assets: CryptoAsset[]) => {
-        setCryptoAssets(assets);
-        localStorage.setItem('cryptoAssets', JSON.stringify(assets));
+        const sanitized = assets.map(a => ({
+            symbol: String(a.symbol),
+            quantity: Number(a.quantity) || 0,
+            averagePrice: Number(a.averagePrice) || 0
+        }));
+        setCryptoAssets(sanitized);
+        localStorage.setItem('cryptoAssets', JSON.stringify(sanitized));
     };
 
     const updateTimeframe = (symbol: string, tf: TimeframeType) => {
@@ -119,7 +137,10 @@ function App() {
     };
 
     const handleBuy = (symbol: string, quantity: number, price: number) => {
-        const total = quantity * price;
+        const qty = Number(quantity);
+        const prc = Number(price);
+        const total = qty * prc;
+
         if (total > walletBalance) {
             toast.error(`Недостаточно средств! Нужно: $${total.toFixed(2)}, Доступно: $${walletBalance.toFixed(2)}`);
             return false;
@@ -131,44 +152,55 @@ function App() {
         let newAssets: CryptoAsset[];
 
         if (existingAsset) {
-            const totalQuantity = existingAsset.quantity + quantity;
-            const totalCost = (existingAsset.quantity * existingAsset.averagePrice) + (quantity * price);
-            const newAveragePrice = totalCost / totalQuantity;
+            const oldQty = Number(existingAsset.quantity) || 0;
+            const oldAvg = Number(existingAsset.averagePrice) || 0;
+
+            const totalQuantity = oldQty + qty;
+            const totalCost = (oldQty * oldAvg) + (qty * prc);
+            const newAveragePrice = totalQuantity > 0 ? totalCost / totalQuantity : prc;
 
             newAssets = cryptoAssets.map(a =>
                 a.symbol === symbol
-                    ? { ...a, quantity: totalQuantity, averagePrice: newAveragePrice }
+                    ? {
+                        symbol: a.symbol,
+                        quantity: totalQuantity,
+                        averagePrice: newAveragePrice
+                    }
                     : a
             );
         } else {
             newAssets = [...cryptoAssets, {
                 symbol,
-                quantity,
-                averagePrice: price
+                quantity: qty,
+                averagePrice: prc
             }];
         }
 
         saveAssets(newAssets);
-        toast.success(`Куплено ${quantity} ${symbol} за $${total.toFixed(2)}!`);
+        toast.success(`Куплено ${qty} ${symbol} за $${total.toFixed(2)}!`);
         return true;
     };
 
     const handleSell = (symbol: string, quantity: number, price: number) => {
+        const qty = Number(quantity);
+        const prc = Number(price);
+
         const asset = cryptoAssets.find(a => a.symbol === symbol);
         if (!asset) {
             toast.error(`У вас нет ${symbol}`);
             return false;
         }
 
-        if (asset.quantity < quantity) {
-            toast.error(`Недостаточно ${symbol}! Доступно: ${asset.quantity.toFixed(4)}`);
+        const assetQty = Number(asset.quantity) || 0;
+        if (assetQty < qty) {
+            toast.error(`Недостаточно ${symbol}! Доступно: ${assetQty.toFixed(4)}`);
             return false;
         }
 
-        const total = quantity * price;
+        const total = qty * prc;
         saveBalance(walletBalance + total);
 
-        const newQuantity = asset.quantity - quantity;
+        const newQuantity = assetQty - qty;
         let newAssets: CryptoAsset[];
 
         if (newQuantity <= 0.0001) {
@@ -176,24 +208,28 @@ function App() {
         } else {
             newAssets = cryptoAssets.map(a =>
                 a.symbol === symbol
-                    ? { ...a, quantity: newQuantity }
+                    ? {
+                        symbol: a.symbol,
+                        quantity: newQuantity,
+                        averagePrice: Number(a.averagePrice) || 0
+                    }
                     : a
             );
         }
 
         saveAssets(newAssets);
-        toast.success(`Продано ${quantity} ${symbol} за $${total.toFixed(2)}!`);
+        toast.success(`Продано ${qty} ${symbol} за $${total.toFixed(2)}!`);
         return true;
     };
 
     const getAssetBalance = (symbol: string): number => {
         const asset = cryptoAssets.find(a => a.symbol === symbol);
-        return asset?.quantity || 0;
+        return Number(asset?.quantity) || 0;
     };
 
     const getPriceInUsdt = (symbol: string): number => {
         if (symbol === 'USDT') return 1;
-        return allData[symbol as keyof typeof allData]?.price || 0;
+        return Number(allData[symbol as keyof typeof allData]?.price) || 0;
     };
 
     const handleConvert = (
@@ -207,6 +243,8 @@ function App() {
             return false;
         }
 
+        const fromAmt = Number(fromAmount);
+        const toAmt = Number(toAmount);
         const fromPrice = getPriceInUsdt(fromSymbol);
         const toPrice = getPriceInUsdt(toSymbol);
 
@@ -215,24 +253,28 @@ function App() {
             return false;
         }
 
-        const usdtValue = fromAmount * fromPrice;
+        const usdtValue = fromAmt * fromPrice;
 
         let newBalance = walletBalance;
-        let newAssets = [...cryptoAssets];
+        let newAssets = cryptoAssets.map(a => ({
+            symbol: String(a.symbol),
+            quantity: Number(a.quantity) || 0,
+            averagePrice: Number(a.averagePrice) || 0
+        }));
 
         if (fromSymbol === 'USDT') {
-            if (fromAmount > walletBalance) {
+            if (fromAmt > walletBalance) {
                 toast.error('Недостаточно USDT');
                 return false;
             }
-            newBalance -= fromAmount;
+            newBalance -= fromAmt;
         } else {
             const fromAsset = newAssets.find(a => a.symbol === fromSymbol);
-            if (!fromAsset || fromAsset.quantity < fromAmount) {
+            if (!fromAsset || fromAsset.quantity < fromAmt) {
                 toast.error(`Недостаточно ${fromSymbol}`);
                 return false;
             }
-            const remaining = fromAsset.quantity - fromAmount;
+            const remaining = fromAsset.quantity - fromAmt;
             if (remaining <= 0.0000001) {
                 newAssets = newAssets.filter(a => a.symbol !== fromSymbol);
             } else {
@@ -243,22 +285,30 @@ function App() {
         }
 
         if (toSymbol === 'USDT') {
-            newBalance += toAmount;
+            newBalance += toAmt;
         } else {
             const toAsset = newAssets.find(a => a.symbol === toSymbol);
             if (toAsset) {
-                const totalQuantity = toAsset.quantity + toAmount;
-                const totalCost = (toAsset.quantity * toAsset.averagePrice) + usdtValue;
-                const newAvg = totalCost / totalQuantity;
+                const oldQty = Number(toAsset.quantity) || 0;
+                const oldAvg = Number(toAsset.averagePrice) || 0;
+
+                const totalQuantity = oldQty + toAmt;
+                const totalCost = (oldQty * oldAvg) + usdtValue;
+                const newAvg = totalQuantity > 0 ? totalCost / totalQuantity : toPrice;
+
                 newAssets = newAssets.map(a =>
                     a.symbol === toSymbol
-                        ? { ...a, quantity: totalQuantity, averagePrice: newAvg }
+                        ? {
+                            symbol: a.symbol,
+                            quantity: totalQuantity,
+                            averagePrice: newAvg
+                        }
                         : a
                 );
             } else {
                 newAssets = [...newAssets, {
                     symbol: toSymbol,
-                    quantity: toAmount,
+                    quantity: toAmt,
                     averagePrice: toPrice
                 }];
             }
@@ -268,7 +318,7 @@ function App() {
         saveAssets(newAssets);
 
         toast.success(
-            `Конвертировано ${fromAmount.toFixed(6)} ${fromSymbol} → ${toAmount.toFixed(6)} ${toSymbol}`
+            `Конвертировано ${fromAmt.toFixed(6)} ${fromSymbol} → ${toAmt.toFixed(6)} ${toSymbol}`
         );
         return true;
     };
@@ -279,9 +329,51 @@ function App() {
         }
     };
 
+    const handleOpenFutures = (
+        symbol: string,
+        side: 'long' | 'short',
+        margin: number,
+        entryPrice: number
+    ) => {
+        if (margin > walletBalance) {
+            toast.error('Недостаточно средств');
+            return;
+        }
+        const pos = futures.openPosition(symbol, side, margin, entryPrice);
+        if (pos) {
+            saveBalance(walletBalance - margin);
+            toast.success(
+                `${side === 'long' ? '🟢 LONG' : '🔴 SHORT'} ${symbol} ×${pos.leverage} открыта`
+            );
+        }
+    };
+
+    const handleCloseFutures = (positionId: string, closePrice: number) => {
+        const pos = futures.positions.find(p => p.id === positionId);
+        if (!pos) return;
+
+        const pnl = pos.side === 'long'
+            ? (closePrice - pos.entryPrice) * pos.quantity
+            : (pos.entryPrice - closePrice) * pos.quantity;
+
+        const returned = pos.margin + pnl;
+        saveBalance(walletBalance + returned);
+
+        futures.closePosition(positionId, closePrice);
+
+        toast.success(
+            `Позиция закрыта. ${pnl >= 0 ? 'Прибыль' : 'Убыток'}: $${Math.abs(pnl).toFixed(2)}`
+        );
+    };
+
     const priceMap = new Map();
     Object.entries(allData).forEach(([symbol, data]) => {
         priceMap.set(symbol, { price: data.price, change: data.change });
+    });
+
+    const simplePriceMap = new Map<string, number>();
+    Object.entries(allData).forEach(([symbol, data]) => {
+        simplePriceMap.set(symbol, data.price);
     });
 
     const isPositive = (currentData?.change || 0) >= 0;
@@ -308,6 +400,13 @@ function App() {
                                     {showBalance ? `${formatPrice(walletBalance)}` : '••••••'}
                                 </span>
                                 <div className="wallet-actions-header">
+                                    <button
+                                        className="wallet-btn-small"
+                                        onClick={() => setShowProfitCalc(true)}
+                                        title="Калькулятор прибыли"
+                                    >
+                                        <Calculator size={14} color="white" />
+                                    </button>
                                     <button
                                         className="wallet-btn-small"
                                         onClick={() => setShowBalance(!showBalance)}
@@ -479,6 +578,15 @@ function App() {
                                         assetBalance={getAssetBalance(selectedSymbol)}
                                     />
                                 </div>
+                                <div className="trade-wrapper-new">
+                                    <FuturesPanel
+                                        symbol={selectedSymbol}
+                                        currentPrice={currentPrice}
+                                        walletBalance={walletBalance}
+                                        leverage={futures.leverage}
+                                        onOpen={handleOpenFutures}
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -501,6 +609,12 @@ function App() {
                                     onClick={() => setActiveTab('history')}
                                 >
                                     <History size={16} /> История
+                                </button>
+                                <button
+                                    className={`tab-btn ${activeTab === 'positions' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('positions')}
+                                >
+                                    📈 Позиции ({futures.openPositions.length})
                                 </button>
                             </div>
 
@@ -578,6 +692,15 @@ function App() {
                                         </div>
                                     </div>
                                 )}
+                                {activeTab === 'positions' && (
+                                    <div className="tab-panel" style={{ minHeight: 240 }}>
+                                        <PositionsList
+                                            positions={futures.positions}
+                                            prices={simplePriceMap}
+                                            onClose={handleCloseFutures}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -596,6 +719,13 @@ function App() {
                 walletBalance={walletBalance}
                 assets={cryptoAssets}
                 onConvert={handleConvert}
+            />
+
+            <ProfitCalculator
+                isOpen={showProfitCalc}
+                onClose={() => setShowProfitCalc(false)}
+                assets={cryptoAssets}
+                prices={priceMap}
             />
 
             {showDepositModal && (

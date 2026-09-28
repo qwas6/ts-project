@@ -22,195 +22,168 @@ export const CandlestickChart = React.memo(({ data }: CandlestickChartProps) => 
 
     useEffect(() => {
         if (!containerRef.current) return;
-        
+
         const resizeObserver = new ResizeObserver((entries) => {
-            for (let entry of entries) {
+            for (const entry of entries) {
                 const { width } = entry.contentRect;
                 setDimensions({ width: width - 20, height: 400 });
             }
         });
-        
+
         resizeObserver.observe(containerRef.current);
         return () => resizeObserver.disconnect();
     }, []);
 
     useEffect(() => {
         if (!canvasRef.current || dimensions.width === 0 || dimensions.height === 0 || data.length === 0) return;
-        
+
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        
-        canvas.width = dimensions.width;
-        canvas.height = dimensions.height;
-        
+
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = dimensions.width * dpr;
+        canvas.height = dimensions.height * dpr;
+        canvas.style.width = `${dimensions.width}px`;
+        canvas.style.height = `${dimensions.height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
         ctx.fillStyle = '#0a0e17';
         ctx.fillRect(0, 0, dimensions.width, dimensions.height);
-        
-        const padding = { top: 15, right: 15, bottom: 40, left: 50 };
+
+        const padding = { top: 15, right: 60, bottom: 40, left: 10 };
         const chartWidth = dimensions.width - padding.left - padding.right;
         const chartHeight = dimensions.height - padding.top - padding.bottom;
-        
+
         if (chartWidth <= 0 || chartHeight <= 0) return;
-        
+
         let minPrice = Infinity;
         let maxPrice = -Infinity;
         data.forEach((candle) => {
             if (candle.low < minPrice) minPrice = candle.low;
             if (candle.high > maxPrice) maxPrice = candle.high;
         });
-        
-        const pricePadding = (maxPrice - minPrice) * 0.05;
+
+        const pricePadding = (maxPrice - minPrice) * 0.08 || 1;
         minPrice -= pricePadding;
         maxPrice += pricePadding;
-        
+
         const priceRange = maxPrice - minPrice;
         const priceToY = (price: number) => {
             return padding.top + chartHeight - ((price - minPrice) / priceRange) * chartHeight;
         };
-        
-        const gridLines = 7;
-        
 
-        const getDecimals = (price: number) => {
-            const str = price.toString();
-            if (str.includes('.')) {
-                const decimals = str.split('.')[1].length;
-                return Math.min(decimals, 4);
-            }
-            return 0;
-        };
-        
-  
-        let maxDecimals = 0;
-        data.forEach((candle) => {
-            maxDecimals = Math.max(maxDecimals, getDecimals(candle.close));
-            maxDecimals = Math.max(maxDecimals, getDecimals(candle.high));
-            maxDecimals = Math.max(maxDecimals, getDecimals(candle.low));
-        });
-        
+        let maxDecimals = 2;
+        if (data.length > 0) {
+            const samplePrice = data[data.length - 1].close;
+            if (samplePrice < 1) maxDecimals = 4;
+            else if (samplePrice < 10) maxDecimals = 3;
+            else if (samplePrice < 1000) maxDecimals = 2;
+            else maxDecimals = 0;
+        }
+
+        const gridLines = 6;
+        ctx.font = '11px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
         for (let i = 0; i <= gridLines; i++) {
             const y = padding.top + (chartHeight / gridLines) * i;
-            
+            const price = maxPrice - (priceRange / gridLines) * i;
+
             ctx.beginPath();
             ctx.moveTo(padding.left, y);
             ctx.lineTo(dimensions.width - padding.right, y);
             ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-            ctx.lineWidth = 0.5;
+            ctx.lineWidth = 1;
             ctx.stroke();
-            
-            const price = maxPrice - (priceRange / gridLines) * i;
-            const formattedPrice = price.toFixed(maxDecimals);
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
-            ctx.font = '10px Inter, system-ui, sans-serif';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(formattedPrice, padding.left - 8, y);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillText(price.toFixed(maxDecimals), dimensions.width - padding.right + 8, y);
         }
-        
-        const visibleData = data.slice(-100);
+
+        const visibleData = data.slice(-80);
         const totalCandles = visibleData.length;
-        const candleWidth = Math.max(Math.min((chartWidth / totalCandles) * 0.85, 10), 3);
-        const spacing = Math.max((chartWidth / totalCandles) - candleWidth, 1.5);
-        
+
+        const slotWidth = chartWidth / Math.max(totalCandles, 40);
+        const candleWidth = Math.max(Math.min(slotWidth * 0.7, 12), 2);
+        const spacing = slotWidth - candleWidth;
+
         for (let i = 0; i < visibleData.length; i++) {
             const candle = visibleData[i];
-            const x = padding.left + i * (candleWidth + spacing) + spacing / 2;
+            const x = padding.left + i * slotWidth + spacing / 2;
             const centerX = x + candleWidth / 2;
             const isGreen = candle.close >= candle.open;
-            
+
             const openY = priceToY(candle.open);
             const closeY = priceToY(candle.close);
             const highY = priceToY(candle.high);
             const lowY = priceToY(candle.low);
-            
+
             const bodyTop = Math.min(openY, closeY);
-            const bodyBottom = Math.max(openY, closeY);
             const bodyHeight = Math.max(Math.abs(closeY - openY), 1);
-            
-            const greenColor = '#00c853';
-            const redColor = '#ff1744';
-            const bodyColor = isGreen ? greenColor : redColor;
-            const wickColor = isGreen ? 'rgba(0, 200, 83, 0.4)' : 'rgba(255, 23, 68, 0.4)';
-            
+
+            const bodyColor = isGreen ? '#00c853' : '#ff1744';
+            const wickColor = isGreen ? 'rgba(0, 200, 83, 0.5)' : 'rgba(255, 23, 68, 0.5)';
+
             ctx.beginPath();
             ctx.moveTo(centerX, highY);
-            ctx.lineTo(centerX, bodyTop);
-            ctx.strokeStyle = wickColor;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(centerX, bodyBottom);
             ctx.lineTo(centerX, lowY);
             ctx.strokeStyle = wickColor;
-            ctx.lineWidth = 0.8;
+            ctx.lineWidth = 1;
             ctx.stroke();
-            
-            const bodyWidth = Math.max(candleWidth * 0.7, 2);
+
             ctx.fillStyle = bodyColor;
-            ctx.fillRect(centerX - bodyWidth / 2, bodyTop, bodyWidth, bodyHeight);
-            
-            if (bodyHeight > 2) {
-                const grad = ctx.createLinearGradient(0, bodyTop, 0, bodyBottom);
-                if (isGreen) {
-                    grad.addColorStop(0, 'rgba(255,255,255,0.08)');
-                    grad.addColorStop(0.5, 'rgba(255,255,255,0)');
-                    grad.addColorStop(1, 'rgba(0,0,0,0.05)');
-                } else {
-                    grad.addColorStop(0, 'rgba(255,255,255,0.08)');
-                    grad.addColorStop(0.5, 'rgba(255,255,255,0)');
-                    grad.addColorStop(1, 'rgba(0,0,0,0.05)');
-                }
-                ctx.fillStyle = grad;
-                ctx.fillRect(centerX - bodyWidth / 2 + 1, bodyTop + 1, bodyWidth - 2, bodyHeight - 2);
-            }
+            ctx.fillRect(centerX - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
         }
-        
-        const step = Math.max(1, Math.floor(visibleData.length / 8));
-        for (let i = 0; i < visibleData.length; i += step) {
-            const x = padding.left + i * (candleWidth + spacing) + spacing / 2 + candleWidth / 2;
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.font = '9px Inter, system-ui, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            
-            ctx.save();
-            ctx.translate(x, dimensions.height - padding.bottom + 4);
-            ctx.rotate(-0.3);
-            ctx.fillText(visibleData[i].time, 0, 0);
-            ctx.restore();
+
+ 
+        ctx.font = '11px Inter, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+ 
+        const approxLabels = 6;
+        const step = Math.max(1, Math.floor((totalCandles - 1) / (approxLabels - 1)));
+
+        for (let i = 0; i < totalCandles; i += step) {
+            const candle = visibleData[i];
+            const x = padding.left + i * slotWidth + slotWidth / 2;
+            ctx.fillText(candle.time, x, dimensions.height - padding.bottom + 12);
         }
-        
+
         if (visibleData.length > 0) {
             const lastCandle = visibleData[visibleData.length - 1];
-            const lastPrice = lastCandle.close;
-            const lastY = priceToY(lastPrice);
+            const lastY = priceToY(lastCandle.close);
             const isGreen = lastCandle.close >= lastCandle.open;
-            
-            ctx.setLineDash([3, 3]);
+
+            ctx.setLineDash([4, 4]);
             ctx.beginPath();
             ctx.moveTo(padding.left, lastY);
             ctx.lineTo(dimensions.width - padding.right, lastY);
-            ctx.strokeStyle = isGreen ? 'rgba(0, 200, 83, 0.15)' : 'rgba(255, 23, 68, 0.15)';
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = isGreen ? 'rgba(0, 200, 83, 0.4)' : 'rgba(255, 23, 68, 0.4)';
+            ctx.lineWidth = 1;
             ctx.stroke();
             ctx.setLineDash([]);
-            
-            const priceLabel = lastPrice.toFixed(maxDecimals);
+
+            const label = lastCandle.close.toFixed(maxDecimals);
+            ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+            const labelWidth = ctx.measureText(label).width + 12;
+            const labelHeight = 18;
+            const labelX = dimensions.width - padding.right + 2;
+            const labelY = lastY - labelHeight / 2;
+
             ctx.fillStyle = isGreen ? '#00c853' : '#ff1744';
-            ctx.font = '11px Inter, system-ui, sans-serif';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'bottom';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 8;
-            ctx.fillText(priceLabel, dimensions.width - padding.right - 4, lastY - 6);
-            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 4);
+            ctx.fill();
+
+            ctx.fillStyle = '#0a0e17';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, labelX + labelWidth / 2, lastY);
         }
-        
+
     }, [data, dimensions]);
 
     if (!data || data.length === 0) {

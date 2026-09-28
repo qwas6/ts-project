@@ -2,6 +2,17 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { CandleData, ChartData, Timeframe } from '../types';
 import { TIMEFRAME_CONFIG } from '../constants';
 
+const BINANCE_API = '/api/binance/api/v3/klines';
+
+ 
+const getTfConfig = (tf: Timeframe) => {
+    return TIMEFRAME_CONFIG[tf] || TIMEFRAME_CONFIG['1m'] || {
+        ms: 60000,
+        label: '1 мин',
+        binance: '1m'
+    };
+};
+
 export function useCryptoData(symbol: string, initialTimeframe: Timeframe) {
     const [price, setPrice] = useState(0);
     const [change, setChange] = useState(0);
@@ -9,164 +20,246 @@ export function useCryptoData(symbol: string, initialTimeframe: Timeframe) {
     const [candles, setCandles] = useState<CandleData[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
-    
+    const [isLoading, setIsLoading] = useState(true);
+
     const wsRef = useRef<WebSocket | null>(null);
     const activeCandleRef = useRef<CandleData | null>(null);
     const lastPriceRef = useRef(0);
     const timeframeRef = useRef<Timeframe>(timeframe);
 
-    const resetCandles = useCallback(() => {
-        setCandles([]);
-        activeCandleRef.current = null;
-    }, []);
+    useEffect(() => {
+        if (initialTimeframe !== timeframe) {
+            setTimeframe(initialTimeframe);
+        }
+    }, [initialTimeframe]);
 
-    const createNewCandle = useCallback((currentPrice: number, timestamp: number, currentTimeframe: Timeframe) => {
-        const intervalMs = TIMEFRAME_CONFIG[currentTimeframe].ms;
-        const intervalKey = Math.floor(timestamp / intervalMs) * intervalMs;
-        
+    const formatCandleTime = (timestamp: number): string => {
+        const d = new Date(timestamp);
+        const hh = d.getHours().toString().padStart(2, '0');
+        const mm = d.getMinutes().toString().padStart(2, '0');
+        return `${hh}:${mm}`;
+    };
+
+    const formatTickTime = (timestamp: number): string => {
+        const d = new Date(timestamp);
+        const hh = d.getHours().toString().padStart(2, '0');
+        const mm = d.getMinutes().toString().padStart(2, '0');
+        const ss = d.getSeconds().toString().padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+    };
+
+    const fetchHistory = useCallback(async (tf: Timeframe) => {
+        try {
+            setIsLoading(true);
+            const config = getTfConfig(tf);
+            const url = `${BINANCE_API}?symbol=${symbol}USDT&interval=${config.binance}&limit=100`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                setIsLoading(false);
+                return;
+            }
+
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                setIsLoading(false);
+                return;
+            }
+
+            const candleData: CandleData[] = data.map((item: any[]) => ({
+                time: formatCandleTime(item[0]),
+                open: parseFloat(item[1]),
+                high: parseFloat(item[2]),
+                low: parseFloat(item[3]),
+                close: parseFloat(item[4]),
+                timestamp: item[0],
+                isClosed: true
+            }));
+
+            const historyData: ChartData[] = candleData.map(c => ({
+                time: c.time,
+                price: c.close,
+                timestamp: c.timestamp
+            }));
+
+            setCandles(candleData);
+            setHistory(historyData);
+
+            if (candleData.length > 0) {
+                const lastCandle = candleData[candleData.length - 1];
+                setPrice(lastCandle.close);
+                lastPriceRef.current = lastCandle.close;
+
+                activeCandleRef.current = {
+                    ...lastCandle,
+                    isClosed: false
+                };
+            }
+
+            setIsLoading(false);
+        } catch (e) {
+            console.error('Ошибка загрузки истории:', e);
+            setIsLoading(false);
+        }
+    }, [symbol]);
+
+    useEffect(() => {
+        timeframeRef.current = timeframe;
+        setCandles([]);
+        setHistory([]);
+        activeCandleRef.current = null;
+        fetchHistory(timeframe);
+    }, [timeframe, fetchHistory]);
+
+    const createNewCandle = useCallback((currentPrice: number, timestamp: number, tf: Timeframe) => {
+        const config = getTfConfig(tf);
+        const bucket = Math.floor(timestamp / config.ms) * config.ms;
+
         const newCandle: CandleData = {
-            time: new Date(intervalKey).toLocaleTimeString(),
+            time: formatCandleTime(timestamp),
             open: currentPrice,
             high: currentPrice,
             low: currentPrice,
             close: currentPrice,
-            timestamp: intervalKey,
+            timestamp: bucket,
             isClosed: false
         };
-        
+
         activeCandleRef.current = newCandle;
         setCandles(prev => [...prev, newCandle].slice(-100));
     }, []);
 
-    const closeCurrentCandle = useCallback((currentPrice: number) => {
+    const updateActiveCandle = useCallback((price: number) => {
         if (activeCandleRef.current && !activeCandleRef.current.isClosed) {
-            const closedCandle: CandleData = {
-                ...activeCandleRef.current,
-                close: currentPrice,
-                isClosed: true
-            };
-            
+            activeCandleRef.current.high = Math.max(activeCandleRef.current.high, price);
+            activeCandleRef.current.low = Math.min(activeCandleRef.current.low, price);
+            activeCandleRef.current.close = price;
+
             setCandles(prev => {
-                const newCandles = [...prev];
-                if (newCandles.length > 0) {
-                    newCandles[newCandles.length - 1] = closedCandle;
-                }
-                return newCandles;
+                const next = [...prev];
+                if (next.length > 0) next[next.length - 1] = { ...activeCandleRef.current! };
+                return next;
             });
-            activeCandleRef.current = null;
         }
     }, []);
 
     useEffect(() => {
-        timeframeRef.current = timeframe;
-        
-        const interval = setInterval(() => {
-            if (lastPriceRef.current > 0 && activeCandleRef.current) {
-                closeCurrentCandle(lastPriceRef.current);
-                createNewCandle(lastPriceRef.current, Date.now(), timeframeRef.current);
+        const config = getTfConfig(timeframe);
+
+        const id = setInterval(() => {
+            const active = activeCandleRef.current;
+            const now = Date.now();
+            const bucket = Math.floor(now / config.ms) * config.ms;
+
+            if (!active) {
+                const p = lastPriceRef.current;
+                if (p > 0) createNewCandle(p, now, timeframe);
+                return;
             }
-        }, TIMEFRAME_CONFIG[timeframe].ms);
-        
-        return () => clearInterval(interval);
-    }, [timeframe, closeCurrentCandle, createNewCandle]);
+
+            if (bucket > active.timestamp) {
+                const closed: CandleData = { ...active, isClosed: true };
+                const p = lastPriceRef.current || active.close;
+
+                const newCandle: CandleData = {
+                    time: formatCandleTime(now),
+                    open: p,
+                    high: p,
+                    low: p,
+                    close: p,
+                    timestamp: bucket,
+                    isClosed: false
+                };
+
+                activeCandleRef.current = newCandle;
+
+                setCandles(prev => {
+                    const next = [...prev];
+                    if (next.length > 0) next[next.length - 1] = closed;
+                    next.push(newCandle);
+                    return next.slice(-100);
+                });
+            }
+        }, 1000);
+
+        return () => clearInterval(id);
+    }, [timeframe, createNewCandle]);
 
     useEffect(() => {
         let mounted = true;
-        
+        let reconnectTimeout: ReturnType<typeof setTimeout>;
+
         const connect = () => {
             const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${symbol.toLowerCase()}usdt@trade`);
             wsRef.current = ws;
-            
-            ws.onopen = () => {
-                if (mounted) {
-                    setIsConnected(true);
-                    resetCandles();
-                }
-            };
-            
+
+            ws.onopen = () => { if (mounted) setIsConnected(true); };
+
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     const trade = data.data;
                     if (!trade || trade.e !== 'trade') return;
-                    
+
                     const newPrice = parseFloat(trade.p);
-                    const timestamp = trade.T;
-                    const timeStr = new Date(timestamp).toLocaleTimeString();
-                    
+                    const ts = trade.T;
+                    const tf = timeframeRef.current;
+
                     lastPriceRef.current = newPrice;
-                    
+
                     setPrice(prev => {
                         const oldPrice = prev || newPrice;
                         const newChange = ((newPrice - oldPrice) / oldPrice) * 100;
                         setChange(newChange);
                         return newPrice;
                     });
-                    
-                    setHistory(prev => [...prev, { time: timeStr, price: newPrice, timestamp }].slice(-100));
-                    
+
+                    setHistory(prev => [...prev, {
+                        time: formatTickTime(ts),
+                        price: newPrice,
+                        timestamp: ts
+                    }].slice(-100));
+
                     if (!activeCandleRef.current) {
-                        createNewCandle(newPrice, timestamp, timeframeRef.current);
+                        createNewCandle(newPrice, ts, tf);
                     } else {
-                        const currentCandle = activeCandleRef.current;
-                        currentCandle.high = Math.max(currentCandle.high, newPrice);
-                        currentCandle.low = Math.min(currentCandle.low, newPrice);
-                        currentCandle.close = newPrice;
-                        
-                        setCandles(prev => {
-                            const newCandles = [...prev];
-                            if (newCandles.length > 0) {
-                                newCandles[newCandles.length - 1] = { ...currentCandle };
-                            }
-                            return newCandles;
-                        });
+                        updateActiveCandle(newPrice);
                     }
                 } catch (err) {
                     console.error(`Ошибка ${symbol}:`, err);
                 }
             };
-            
-            ws.onerror = () => {
-                if (mounted) setIsConnected(false);
-            };
-            
+
+            ws.onerror = () => { if (mounted) setIsConnected(false); };
             ws.onclose = () => {
                 if (mounted) {
                     setIsConnected(false);
-                    setTimeout(connect, 3000);
+                    reconnectTimeout = setTimeout(connect, 3000);
                 }
             };
         };
-        
+
         connect();
-        
+
         return () => {
             mounted = false;
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
             if (wsRef.current) wsRef.current.close();
         };
-    }, [symbol, createNewCandle, resetCandles]);
+    }, [symbol, createNewCandle, updateActiveCandle]);
 
     const changeTimeframe = useCallback((newTimeframe: Timeframe) => {
-        if (lastPriceRef.current > 0) {
-            closeCurrentCandle(lastPriceRef.current);
-            setTimeframe(newTimeframe);
-            setTimeout(() => {
-                if (lastPriceRef.current > 0) {
-                    createNewCandle(lastPriceRef.current, Date.now(), newTimeframe);
-                }
-            }, 10);
-        } else {
-            setTimeframe(newTimeframe);
-        }
-    }, [closeCurrentCandle, createNewCandle]);
+        setTimeframe(newTimeframe);
+    }, []);
 
-    return { 
-        price, 
-        change, 
-        history, 
-        candles, 
-        isConnected, 
-        timeframe, 
-        changeTimeframe 
+    return {
+        price,
+        change,
+        history,
+        candles,
+        isConnected,
+        timeframe,
+        changeTimeframe,
+        isLoading
     };
 }
