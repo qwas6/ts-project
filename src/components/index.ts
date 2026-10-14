@@ -10,3 +10,4 @@ export { Slider } from './Slider/Slider';
 export { ProfitCalculator } from './ProfitCalculator/ProfitCalculator';
 export { FuturesPanel } from './FuturesPanel/./FuturesPanel';
 export { PositionsList } from './PositionsList/PositionsList';
+export { AnimatedPrice } from './AnimatedPrice/AnimatedPrice';

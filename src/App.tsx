@@ -17,6 +17,7 @@ import { Converter } from './components/Converter/Converter';
 import { ProfitCalculator } from './components/ProfitCalculator/ProfitCalculator';
 import { FuturesPanel } from './components/FuturesPanel/FuturesPanel';
 import { PositionsList } from './components/PositionsList/PositionsList';
+import { AnimatedPrice } from './components/AnimatedPrice/AnimatedPrice';
 import { useCryptoData } from './hooks/useCryptoData';
 import { useGlobalHistory } from './hooks/useGlobalHistory';
 import { useFutures } from './hooks/useFutures';
@@ -388,7 +389,7 @@ function App() {
                     <div className="header-content">
                         <div className="header-left">
                             <h1>
-                                <Rocket size={28} />
+                                <Rocket size={28} className="anim-rocket" />
                                 Crypto Live Tracker
                             </h1>
                         </div>
@@ -446,7 +447,7 @@ function App() {
                             >
                                 <span className="symbol-main">{crypto.symbol}</span>
                                 <span className="symbol-price">
-                                    {formatPrice(data?.price || 0)}
+                                    <AnimatedPrice value={data?.price || 0} formatFn={formatPrice} />
                                 </span>
                                 <span className={`symbol-change ${(data?.change || 0) >= 0 ? 'positive' : 'negative'}`}>
                                     {(data?.change || 0) >= 0 ? '+' : ''}{(data?.change || 0).toFixed(2)}%
@@ -466,7 +467,7 @@ function App() {
                     </div>
                     <div className="price-info">
                         <p className={`price ${isPositive ? 'positive' : 'negative'}`}>
-                            {formatPrice(currentPrice)}
+                            <AnimatedPrice value={currentPrice} formatFn={formatPrice} />
                         </p>
                         <p className={`change ${isPositive ? 'positive' : 'negative'}`}>
                             {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -544,7 +545,10 @@ function App() {
 
                                         {chartTab === 'candle' && (
                                             <div className="chart-area-full">
-                                                <CandlestickChart data={currentData?.candles || []} />
+                                                <CandlestickChart
+                                                    data={currentData?.candles || []}
+                                                    positions={futures.positions.filter(p => p.symbol === selectedSymbol)}
+                                                />
                                             </div>
                                         )}
                                     </>

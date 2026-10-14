@@ -53,15 +53,25 @@
 
 .futures-side-btn {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     padding: 10px;
     border: none;
     border-radius: 10px;
     font-size: 13px;
     font-weight: 700;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s;
     background: #f1f5f9;
     color: #475569;
+}
+
+.futures-side-btn svg {
+    display: block;
+    flex-shrink: 0;
 }
 
 .futures-side-btn.long.active {
@@ -144,14 +154,24 @@
 
 .futures-open-btn {
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     padding: 12px;
     border: none;
     border-radius: 10px;
     font-size: 14px;
     font-weight: 700;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s;
     color: white;
+}
+
+.futures-open-btn svg {
+    display: block;
+    flex-shrink: 0;
 }
 
 .futures-open-btn.long {

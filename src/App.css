@@ -1022,4 +1022,89 @@ header {
 .tf-badge-under.active {
     background: rgba(99, 102, 241, 0.3);
     color: white;
+}.wallet-amount {
+    transition: color 0.3s;
+}
+
+.anim-pulse-green {
+    animation: pulseGreen 0.5s ease;
+}
+
+.anim-pulse-red {
+    animation: pulseRed 0.5s ease;
+}
+
+.symbol-tab {
+    transition: transform 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.symbol-tab:hover {
+    transform: translateY(-2px);
+}
+
+.tab-btn {
+    transition: all 0.2s;
+}
+
+.chart-tab-btn {
+    transition: all 0.2s;
+}
+
+.tf-badge-under {
+    transition: all 0.2s;
+}
+
+.tf-badge-under:hover {
+    transform: translateY(-1px);
+}
+
+.trade-action-btn {
+    transition: all 0.2s;
+}
+
+.futures-action-btn {
+    transition: all 0.2s;
+}
+
+.deposit-preset button {
+    transition: all 0.2s;
+}
+
+.deposit-preset button:hover {
+    transform: translateY(-2px);
+}
+
+.converter-modal,
+.alerts-modal,
+.profit-calc-modal,
+.deposit-modal,
+.buy-modal {
+    animation: modalZoomIn 0.25s ease;
+}
+
+.anim-rocket {
+    animation: rocketFloat 3s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes rocketFloat {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-4px) rotate(2deg); }
+}
+
+@keyframes pulseGreen {
+    0% { color: #22c55e; transform: scale(1); }
+    30% { color: #22c55e; transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pulseRed {
+    0% { color: #ef4444; transform: scale(1); }
+    30% { color: #ef4444; transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+@keyframes modalZoomIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }
